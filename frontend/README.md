@@ -1,16 +1,39 @@
-# React + Vite
+# IPB Space - Frontend Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi klien berbasis web untuk IPB Space, dibangun menggunakan React.js dan Vite.
 
-Currently, two official plugins are available:
+## Struktur Proyek
+* `src/components`: Komponen UI yang dapat digunakan kembali (Button, Card, Input).
+* `src/lib`: Konfigurasi utilitas, termasuk instance Axios.
+* `src/pages`: Halaman-halaman utama aplikasi.
+* `src/App.jsx`: Entry point dan konfigurasi routing.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Integrasi API
+Komunikasi dengan Backend dilakukan menggunakan library Axios yang telah dikonfigurasi di `src/lib/axios.js`.
 
-## React Compiler
+**Ketentuan Pengembangan:**
+* Jangan menggunakan `fetch` native. Gunakan instance axios yang telah disediakan.
+* Pastikan URL backend pada konfigurasi axios sesuai dengan port backend yang berjalan (default: `http://127.0.0.1:8000`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Styling
+Proyek ini menggunakan **Tailwind CSS**.
+* Gunakan utility class untuk styling komponen.
+* Hindari pembuatan file CSS kustom kecuali benar-benar diperlukan.
 
-## Expanding the ESLint configuration
+## Instalasi dan Eksekusi
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  **Install Dependencies**
+    Pastikan berada di direktori `frontend`.
+    ```bash
+    npm install
+    ```
+
+2.  **Jalankan Development Server**
+    ```bash
+    npm run dev
+    ```
+
+3.  **Build untuk Produksi**
+    ```bash
+    npm run build
+    ```
