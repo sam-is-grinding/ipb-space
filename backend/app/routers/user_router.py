@@ -1,0 +1,75 @@
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.services.user_service import UserService
+from app.repositories import user_repository
+from app.schemas.user import UserResponse
+from app.api.dependencies import ensure_is_admin, get_current_user
+from app.schemas.auth import AuthResponse
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+async def get_user_service(db: AsyncSession = Depends(get_db)):
+    repo = user_repository.UserRepository(db)
+    return UserService(repo)
+
+@router.get("/me", response_model=AuthResponse)
+async def read_current_user(
+    current_user: UserResponse = Depends(get_current_user)
+) -> AuthResponse:
+    """
+    Endpoint to retrieve the current authenticated user's information.
+    """
+    return AuthResponse(success=True, message="User retrieved successfully", data=current_user)
+
+@router.get("/", response_model=list[UserResponse])
+async def read_all_users(
+    skip: int = Query(0, ge=0, description="The number of records to skip for pagination"),
+    limit: int = Query(100, gt=0, le=1000, description="The maximum number of records to return"),
+    service: UserService = Depends(get_user_service),
+    is_admin: UserResponse = Depends(ensure_is_admin),
+):
+    """
+    Endpoint to retrieve a list of users with pagination. Requires authentication.
+    
+    :param skip: The number of records to skip for pagination
+    :type skip: int
+    :param limit: The maximum number of records to return
+    :type limit: int
+    :param service: The UserService dependency for handling user-related business logic
+    :type service: UserService
+    :param current_user: The current authenticated user retrieved from the get_current_user dependency (used for authorization)
+    :type current_user: UserResponse
+    :param is_admin: The current authenticated user retrieved from the ensure_is_admin dependency (used for authorization)
+    :type is_admin: UserResponse
+    :return: A list of UserResponse objects representing the users in the system
+    :rtype: List[UserResponse]
+    """
+    if not is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    
+    return await service.get_users(skip=skip, limit=limit)
+
+@router.get("/{user_id}", response_model=UserResponse)
+async def read_user_by_id(
+    user_id: int,
+    service: UserService = Depends(get_user_service),
+    is_admin: UserResponse = Depends(ensure_is_admin)
+):
+    """
+    Endpoint to retrieve a user's information by their ID. Requires admin privileges.
+    
+    :param user_id: The ID of the user to retrieve
+    :type user_id: int
+    :param service: The UserService dependency for handling user-related business logic
+    :type service: UserService
+    :param current_user: The current authenticated user retrieved from the get_current_user dependency (used for authorization)
+    :type current_user: UserResponse
+    :return: The UserResponse object representing the requested user if found, otherwise raises an HTTPException
+    :rtype: UserResponse
+    """
+    if is_admin:
+        return await service.get_user_by_id(user_id)
+
+    return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
