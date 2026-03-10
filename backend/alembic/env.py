@@ -19,10 +19,16 @@ if config.config_file_name is not None:
 
 from app.core.database import Base
 from app.models.facility import Facility
+from app.models.user import User
+from app.models.session import UserSession
 
 target_metadata = Base.metadata
 
 database_url = os.getenv("DATABASE_URL")
+
+if not database_url:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
 config.set_main_option("sqlalchemy.url", database_url)
 
 def run_migrations_offline() -> None:
