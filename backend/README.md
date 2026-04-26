@@ -43,14 +43,19 @@ docker --version # Memastikan docker sudah terinstall
 
 2. **Pastikan sudah berada di Folder /backend**
 
-3. **Jalankan app backend dengan Docker Compose**
+3. **Jalankan container database**
+```bash
+docker compose up db -d
+```
+
+4. **Jalankan app backend dengan Docker Compose**
 ```bash
 docker compose up --build -d
 ```
 
-4. **Menghentikan Docker**
+5. **Menghentikan Docker**
 ```bash
-docker compose down
+docker compose down -v # flag -v untuk menghapus data pada container postgres, jangan gunakan di prod
 ```
 
 ## Menjalankan dari Local
