@@ -98,3 +98,12 @@ uvicorn app.main:app --reload
 
 7. **Dokumentasi API**
 Akses Swagger UI di: `http://127.0.0.1:8000/docs`
+
+---
+
+## Dev Notes:
++ Rules for the password when registering a new user is: 
+    - Cannot be empty
+    - Must be at least 8 characters long
+    - Must contain both letters and numbers
+    - Cannot contain whitespace characters

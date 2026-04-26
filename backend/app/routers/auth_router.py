@@ -29,6 +29,12 @@ async def register(
         "password": "SecurePassword123", 
         "role": "civitas"
     }
+
+    rules for password:
+    - Cannot be empty
+    - Must be at least 8 characters long
+    - Must contain both letters and numbers
+    - Cannot contain whitespace characters
     """
     response = await service.register(data)
 
