@@ -1,31 +1,32 @@
 services:
-  dev: 
+  ipb-space-backend: 
     build: .
-    container_name: ipb_space_backend
+    env_file:
+      - .env
+    dns:
+      - 8.8.8.8      # Google DNS
+      - 8.8.4.4      # fallback
+    container_name: ipb-space-backend
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:simpelaja1@db:5432/ipb-space-db
     depends_on:
       - db
 
   db:
     image: postgres:latest
     container_name: pg_db
+    env_file:
+      - .env
     # This maps your laptop's port to the container's port
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=simpelaja1
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=ipb-space-db
     volumes:
       # Format: [Existing Volume Name] : [Path inside container]
       - pgdata:/var/lib/postgresql
     restart: always
 
 volumes:
-  # This tells Docker the volume already exists outside this file
+  # Compose-managed named volume (auto-created on first `docker compose up`)
   pgdata:
-    external: true
+    driver: local
 

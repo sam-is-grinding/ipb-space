@@ -1,24 +1,11 @@
-FROM python:3.11-slim
+FROM python:3.14
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+WORKDIR /code
 
-WORKDIR /app
+COPY ./requirements.txt /code/requirements.txt
 
-# System deps for building some Python packages (kept minimal)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential gcc libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# Copy requirements first to leverage Docker layer caching
-COPY requirements.txt /app/requirements.txt
-
-RUN pip install --upgrade pip \
-    && pip install -r /app/requirements.txt
-
-# Copy app source
-COPY . /app
-
-EXPOSE 8000
+COPY ./app /code/app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
