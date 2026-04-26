@@ -35,14 +35,30 @@ SECRET_KEY=string_rahasia_untuk_jwt
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
+## Menjalankan dengan Docker Compose (Recommended)
+1. **Pastikan Docker sudah ter-install di mesin anda**
+```bash
+docker --version # Memastikan docker sudah terinstall
+```
 
-## Instalasi dan Eksekusi
+2. **Pastikan sudah berada di Folder /backend**
+
+3. **Jalankan app backend dengan Docker Compose**
+```bash
+docker compose up --build -d
+```
+
+4. **Menghentikan Docker**
+```bash
+docker compose down
+```
+
+## Menjalankan dari Local
 
 1. **Buat Virtual Environment**
 ```bash
 python -m venv venv
 ```
-
 
 2. **Aktifkan Virtual Environment**
 * Windows: `venv\Scripts\activate`
@@ -53,20 +69,27 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-
 4. **Migrasi Database (Alembic)**
 Wajib dijalankan setiap ada perubahan pada model database.
 ```bash
 alembic upgrade head
 ```
 
+5. **Seed Data Awal**
+Jalankan perintah ini untuk menambahkan data awal user dan fasilitas (idempotent, aman dijalankan berulang):
+```bash
+python seed.py
+```
 
-5. **Jalankan Server**
+Default akun yang dibuat:
+- `admin@ipbspace.local` / `Admin1234`
+- `manager@ipbspace.local` / `Manager1234`
+- `civitas@ipbspace.local` / `Civitas1234`
+
+6. **Jalankan Server**
 ```bash
 uvicorn app.main:app --reload
 ```
 
-
-6. **Dokumentasi API**
+7. **Dokumentasi API**
 Akses Swagger UI di: `http://127.0.0.1:8000/docs`
-
