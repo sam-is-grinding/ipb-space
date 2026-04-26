@@ -6,7 +6,7 @@ from app.services.user_service import UserService
 from app.repositories import user_repository
 from app.schemas.user import UserResponse
 from app.api.dependencies import ensure_is_admin, get_current_user
-from app.schemas.auth import AuthResponse
+from app.schemas.http import HTTPResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -14,22 +14,22 @@ async def get_user_service(db: AsyncSession = Depends(get_db)):
     repo = user_repository.UserRepository(db)
     return UserService(repo)
 
-@router.get("/me", response_model=AuthResponse)
+@router.get("/me", response_model=HTTPResponse)
 async def read_current_user(
     current_user: UserResponse = Depends(get_current_user)
-) -> AuthResponse:
+) -> HTTPResponse:
     """
     Endpoint to retrieve the current authenticated user's information.
     """
-    return AuthResponse(success=True, message="User retrieved successfully", data=current_user)
+    return HTTPResponse(success=True, data={"user": current_user})
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("/", response_model=HTTPResponse)
 async def read_all_users(
     skip: int = Query(0, ge=0, description="The number of records to skip for pagination"),
     limit: int = Query(100, gt=0, le=1000, description="The maximum number of records to return"),
     service: UserService = Depends(get_user_service),
-    is_admin: UserResponse = Depends(ensure_is_admin),
-):
+    is_admin: bool = Depends(ensure_is_admin),
+) -> HTTPResponse:
     """
     Endpoint to retrieve a list of users with pagination. Requires authentication.
     
@@ -46,17 +46,15 @@ async def read_all_users(
     :return: A list of UserResponse objects representing the users in the system
     :rtype: List[UserResponse]
     """
-    if not is_admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-    
-    return await service.get_users(skip=skip, limit=limit)
+    users = await service.get_users(skip=skip, limit=limit)
+    return HTTPResponse(success=True, data={"items": users})
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=HTTPResponse)
 async def read_user_by_id(
     user_id: int,
     service: UserService = Depends(get_user_service),
-    is_admin: UserResponse = Depends(ensure_is_admin)
-):
+    is_admin: bool = Depends(ensure_is_admin)
+) -> HTTPResponse:
     """
     Endpoint to retrieve a user's information by their ID. Requires admin privileges.
     
@@ -69,7 +67,5 @@ async def read_user_by_id(
     :return: The UserResponse object representing the requested user if found, otherwise raises an HTTPException
     :rtype: UserResponse
     """
-    if is_admin:
-        return await service.get_user_by_id(user_id)
-
-    return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    user = await service.get_user_by_id(user_id)
+    return HTTPResponse(success=True, data={"user": user})

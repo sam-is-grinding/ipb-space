@@ -6,7 +6,6 @@ from app.services.auth_service import AuthService
 from app.repositories import user_repository
 from app.schemas.user import UserCreate, UserLogin
 from app.schemas.http import HTTPResponse
-from app.schemas.auth import AuthResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,44 +21,44 @@ async def register(
     """
     Endpoint to register a new user.
 
-    :param data: The UserCreate schema containing user information for registration
-    :type data: UserCreate
-    :param service: The AuthService dependency for handling user registration logic
-    :type service: AuthService
-    :return: The registered UserResponse object (without password)
-    :rtype: UserResponse
-    :raises HTTPException: If the email is already registered
+    Example request body:
+    {
+        "fullname": "John Doe",
+        "idnum": "12345678",
+        "email": "john.doe@ipbspace.com",
+        "password": "SecurePassword123", 
+        "role": "civitas"
+    }
     """
     response = await service.register(data)
 
     return HTTPResponse(
         success=True,
-        message="User registered successfully",
-        data={"user": response}
+        data={}
     )
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=HTTPResponse)
 async def login(
     data: UserLogin,
     service: AuthService = Depends(get_auth_service)
-) -> AuthResponse:
+) -> HTTPResponse:
     """
     Endpoint to log in a user and provide access and refresh tokens.
 
-    :param data: The UserLogin schema containing email and password for authentication
-    :type data: UserLogin
-    :param service: The AuthService dependency for handling authentication logic
-    :type service: AuthService
-    :return: An AuthResponse object containing the success status, message, and token information
-    :raises HTTPException: If authentication fails due to invalid credentials
+    Example request body:
+    {
+        "email": "john.doe@ipbspace.com",
+        "password": "SecurePassword123"
+    }
     """
-    AuthData = await service.login(data)
+    auth_data = await service.login(data)
     
-    return AuthResponse(
+    return HTTPResponse(
         success=True,
-        message="Login successful",
-        token=AuthData.token,
-        data=AuthData.data
+        data={
+            "user": auth_data.data,
+            "token": auth_data.token,
+        }
     )
 
 @router.post("/refresh", response_model=HTTPResponse)
@@ -70,16 +69,13 @@ async def refresh_access_token(
     """
     Endpoint to refresh an access token using a valid refresh token.
 
-    :param refresh_token: The refresh token provided by the client for refreshing the access token
-    :type refresh_token: str
-    :param service: The AuthService dependency for handling token refresh logic
-    :type service: AuthService
-    :return: A new Token object containing the refreshed access token and the same refresh token
-    :raises HTTPException: If the refresh token is invalid or expired
+    Example request body:
+    {
+        "refresh_token": "your_refresh_token_here"
+    }
     """
     new_token = await service.refresh_access_token(refresh_token)
     return HTTPResponse(
         success=True,
-        message="Token refreshed successfully",
         data={"token": new_token}
     )
