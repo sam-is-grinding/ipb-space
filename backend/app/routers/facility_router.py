@@ -5,7 +5,7 @@ from app.repositories.facility_repository import FacilityRepository
 from app.services.facility_service import FacilityService
 from app.schemas.facility import FacilityCreate, FacilityResponse
 from app.schemas.http import HTTPResponse
-from api.dependencies import ensure_is_admin
+from app.api.dependencies import ensure_is_admin
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
