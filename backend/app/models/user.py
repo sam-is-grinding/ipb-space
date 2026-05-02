@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -7,19 +7,7 @@ from app.enums.user_enums import UserRoles
 
 class User(Base):
     """
-    SQLAlchemy User model.
-
-    Attributes:
-        id (int): Primary key, auto-incremented.
-        fullname (str): Full name of the user.
-        idnum (str): Unique identifier (NIM/NIP) for the user.
-        email (str): Unique email address of the user.
-        hashed_password (str): Hashed password for authentication.
-        role (str): Role of the user (obtained from UserRoles enum).
-        is_active (bool): Indicates if the account is active or deactivated.
-        created_at (datetime): Timestamp of when the user was created.
-        updated_at (datetime): Timestamp of the last update to the user record.
-        last_login (datetime): Timestamp of the last login by the user.
+    Base User model. 
     """
 
     __tablename__ = "users"
@@ -29,12 +17,58 @@ class User(Base):
     idnum : Mapped[str] = mapped_column(String, unique=True, index=True, nullable=True)  # NIM / NIP
     email : Mapped[str] = mapped_column(String, unique=True, index=True,nullable=False)
     hashed_password : Mapped[str] = mapped_column(String)
-    role : Mapped[str] = mapped_column(String, default=UserRoles.CIVITAS.value, nullable=False)
+    role : Mapped[str] = mapped_column(String, nullable=False)
 
     # Timestamps
     created_at : Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), default=datetime.datetime.now, nullable=False)
     updated_at : Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
     last_login : Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'user',
+        'polymorphic_on': role
+    }
+
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
+    
+class Civitas(User):
+    """
+    Civitas model, inheriting from User. 
+    """
+    __tablename__ = "civitas"
+
+    id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
+    role = Column(String(50), default="civitas")
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'civitas',
+    }
+
+class FacilityAdmin(User):
+    """
+    FacilityAdmin model, inheriting from User. 
+    """
+    __tablename__ = "facility_admins"
+
+    id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
+    role = Column(String(50), default="facility_admin")
+    work_unit : Mapped[str] = mapped_column(String, nullable=True)  # Unit kerja untuk facility admin
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'facility_admin',
+    }
+
+class SuperAdmin(User):
+    """
+    SuperAdmin model, inheriting from User. 
+    """
+    __tablename__ = "super_admins"
+
+    id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
+    role = Column(String(50), default="super_admin")
+    authority_code : Mapped[str] = mapped_column(String, nullable=True)  # Kode otoritas untuk super admin
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'super_admin',
+    }
