@@ -106,9 +106,9 @@ python seed.py
 ```
 
 Default akun yang dibuat:
-- `admin@ipbspace.local` / `Admin1234`
-- `manager@ipbspace.local` / `Manager1234`
-- `civitas@ipbspace.local` / `Civitas1234`
+- `admin@ipbspace.com` / `Admin1234`
+- `manager@ipbspace.com` / `Manager1234`
+- `civitas@ipbspace.com` / `Civitas1234`
 
 6. **Jalankan Server**
 ```bash
