@@ -27,7 +27,7 @@ class Booking(Base):
     facility_id: Mapped[int] = mapped_column(ForeignKey("facilities.id"), nullable=False, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=True)
-    
+
     purpose : Mapped[str] = mapped_column(String, nullable=False)
     number_of_attendees : Mapped[int] = mapped_column(Integer, nullable=False)
     document_url : Mapped[str] = mapped_column(String, nullable=True)
@@ -36,6 +36,10 @@ class Booking(Base):
     date_of_booking : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     start_time : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    # Handover fields
+    handover_token : Mapped[str] = mapped_column(String, nullable=True, index=True)
+    handover_expires_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     facility = relationship("Facility")
     user = relationship("User")

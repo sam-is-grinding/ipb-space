@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseSettings):
+    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
     MAIL_USERNAME: str = os.getenv("MAIL_USERNAME", "")
     MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD", "")
     MAIL_FROM: str = os.getenv("MAIL_FROM", "info@ipb.space")

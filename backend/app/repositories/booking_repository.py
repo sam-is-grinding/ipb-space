@@ -9,14 +9,18 @@ class BookingRepository:
 
     async def get_all(self):
         stmt = select(Booking).options(
-            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+            joinedload(Booking.extra_items).joinedload(BookingItem.item),
+            joinedload(Booking.user),
+            joinedload(Booking.facility)
         )
         result = await self.db.execute(stmt)
         return result.unique().scalars().all()
 
     async def get_by_id(self, booking_id: int):
         stmt = select(Booking).where(Booking.id == booking_id).options(
-            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+            joinedload(Booking.extra_items).joinedload(BookingItem.item),
+            joinedload(Booking.user),
+            joinedload(Booking.facility)
         )
         result = await self.db.execute(stmt)
         return result.unique().scalars().first()
@@ -47,7 +51,9 @@ class BookingRepository:
 
     async def get_bookings_by_facility_id(self, facility_id: int):
         stmt = select(Booking).where(Booking.facility_id == facility_id).options(
-            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+            joinedload(Booking.extra_items).joinedload(BookingItem.item),
+            joinedload(Booking.user),
+            joinedload(Booking.facility)
         )
         result = await self.db.execute(stmt)
         return result.unique().scalars().all()

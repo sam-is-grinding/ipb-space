@@ -13,6 +13,7 @@ from app.schemas.http import HTTPResponse
 from app.api.dependencies import ensure_is_admin, get_current_user
 from app.schemas.user import UserResponse
 from app.storage.factory import get_document_storage
+from app.services.mail_service import mail_service
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
@@ -21,7 +22,7 @@ async def get_booking_service(db: AsyncSession = Depends(get_db)):
     facility_repo = FacilityRepository(db)
     user_repo = UserRepository(db)
     storage = get_document_storage()
-    return BookingService(booking_repo, facility_repo, user_repo, storage)
+    return BookingService(booking_repo, facility_repo, user_repo, storage, mail_service)
 
 @router.get("/", response_model=HTTPResponse)
 async def get_all_bookings(
@@ -108,7 +109,13 @@ async def update_booking_status(
 async def cancel_booking(
     booking_id: int,
     service: BookingService = Depends(get_booking_service),
+    current_user: UserResponse = Depends(get_current_user)
 ) -> HTTPResponse:
+    booking_user_id = (await service.get_booking_by_id(booking_id)).user_id
+    is_correct_user = booking_user_id == current_user.id    
+
+    if not is_correct_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Kamu tidak memiliki izin untuk membatalkan booking ini")
     updated_booking = await service.update_booking_status(booking_id, "canceled")
     return HTTPResponse(
         success=True,
@@ -147,3 +154,17 @@ async def delete_booking_document(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found or could not be deleted")
         
     return HTTPResponse(success=True, data={"message": "Document deleted successfully"})
+
+@router.get("/handover/confirm", response_model=HTTPResponse)
+async def confirm_handover(
+    token: str,
+    service: BookingService = Depends(get_booking_service)
+) -> HTTPResponse:
+    """
+    Endpoint to confirm a booking handover using a token sent via email.
+    """
+    booking = await service.accept_handover(token)
+    return HTTPResponse(
+        success=True,
+        data={}
+    )
