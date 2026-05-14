@@ -10,6 +10,11 @@ class FacilityRepository:
         result = await self.db.execute(select(Facility))
         return result.scalars().all()
 
+    async def get_by_id(self, facility_id: int):
+        stmt = select(Facility).where(Facility.id == facility_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def create(self, facility_data: Facility):
         self.db.add(facility_data)
         await self.db.commit()

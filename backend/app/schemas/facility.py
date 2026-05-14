@@ -1,18 +1,21 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class FacilityCreate(BaseModel):
     name: str
+    code: str
     location: str
     capacity: int
-    description: Optional[str] = None
+    threshold: Optional[int] = 0
+    image_url: Optional[str] = None
+    condition: Optional[str] = None
+    contact_person: Optional[str] = None
+
 
 class FacilityResponse(FacilityCreate):
     id: int
-    is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
-    image_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

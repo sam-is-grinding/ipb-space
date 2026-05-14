@@ -21,6 +21,13 @@ from app.core.database import Base
 from app.models.facility import Facility
 from app.models.user import User
 from app.models.session import UserSession
+from app.models.schedule import Schedule
+from app.models.facilityAsset import FacilityAsset
+from app.models.booking import Booking
+from app.models.asset import Asset
+from app.models.items import Items
+from app.models.extraItems import ExtraItems
+
 
 target_metadata = Base.metadata
 

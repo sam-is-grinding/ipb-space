@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.repositories.facility_repository import FacilityRepository
@@ -36,11 +36,13 @@ async def create_facility(
     Example request body:
     {
         "name": "RK. U1.01",
-        "description": "Ruang kelas ber-AC dengan proyektor.",
+        "code": "RK-U1-01",
         "location": "Gedung GWW Lantai 1",
         "capacity": 40,
+        "threshold": 0,
         "image_url": "https://example.com/images/rk-u1-01.jpg",
-        "is_active": true
+        "condition": "Good",
+        "contact_person": "John Doe"
     }
     """
     facility = await service.add_facility(data)

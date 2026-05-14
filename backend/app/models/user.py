@@ -24,11 +24,6 @@ class User(Base):
     updated_at : Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
     last_login : Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'user',
-        'polymorphic_on': role
-    }
-
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
     
@@ -39,12 +34,7 @@ class Civitas(User):
     __tablename__ = "civitas"
 
     id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
-    role = Column(String(50), default="civitas")
     
-    __mapper_args__ = {
-        'polymorphic_identity': 'civitas',
-    }
-
 class FacilityAdmin(User):
     """
     FacilityAdmin model, inheriting from User. 
@@ -52,13 +42,8 @@ class FacilityAdmin(User):
     __tablename__ = "facility_admins"
 
     id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
-    role = Column(String(50), default="facility_admin")
     work_unit : Mapped[str] = mapped_column(String, nullable=True)  # Unit kerja untuk facility admin
     
-    __mapper_args__ = {
-        'polymorphic_identity': 'facility_admin',
-    }
-
 class SuperAdmin(User):
     """
     SuperAdmin model, inheriting from User. 
@@ -66,9 +51,5 @@ class SuperAdmin(User):
     __tablename__ = "super_admins"
 
     id : Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), primary_key=True)
-    role = Column(String(50), default="super_admin")
     authority_code : Mapped[str] = mapped_column(String, nullable=True)  # Kode otoritas untuk super admin
     
-    __mapper_args__ = {
-        'polymorphic_identity': 'super_admin',
-    }
