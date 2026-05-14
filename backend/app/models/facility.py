@@ -1,8 +1,13 @@
 from sqlalchemy import Integer, String, Text, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from app.core.database import Base
 from app.models.facilityAsset import FacilityAsset
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from app.models.asset import Asset
 
 class Facility(Base):
     __tablename__ = "facilities"
@@ -17,7 +22,8 @@ class Facility(Base):
     condition : Mapped[str] = mapped_column(String, nullable=True)
     contact_person : Mapped[str] = mapped_column(String, nullable=True)
 
-    assets : Mapped[list["FacilityAsset"]] = relationship("FacilityAsset", back_populates="facility")
+    facility_assets : Mapped[list["FacilityAsset"]] = relationship("FacilityAsset", back_populates="facility", cascade="all, delete-orphan")
+    assets: AssociationProxy[list["Asset"]] = association_proxy("facility_assets", "asset", creator=lambda asset: FacilityAsset(asset=asset))
 
     created_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())

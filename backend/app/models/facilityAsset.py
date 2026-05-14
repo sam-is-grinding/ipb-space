@@ -8,5 +8,5 @@ class FacilityAsset(Base):
     __tablename__ = "facility_assets"
     asset_id : Mapped[int] = mapped_column(Integer, ForeignKey("assets.id"), primary_key=True)
     facility_id : Mapped[int] = mapped_column(Integer, ForeignKey("facilities.id"), primary_key=True)
-    asset = relationship("Asset", back_populates="facilities")
-    facility = relationship("Facility", back_populates="assets")
+    asset = relationship("Asset", back_populates="asset_facilities")
+    facility = relationship("Facility", back_populates="facility_assets")

@@ -34,6 +34,7 @@ class SeedFacility(TypedDict):
     image_url: str | None
     condition: str | None
     contact_person: str | None
+    assets: list[str] | None
 
 
 class SeedAsset(TypedDict):
@@ -60,7 +61,6 @@ class SeedBooking(TypedDict):
     date_offset: int  # days from now
     start_hour: int
     end_hour: int
-    asset_name: str | None
     extra_item_names: list[str] | None
 
 
@@ -99,6 +99,7 @@ SEED_FACILITIES: list[SeedFacility] = [
         "image_url": "https://images.unsplash.com/photo-1497366216548-37526070297c",
         "condition": "good",
         "contact_person": None,
+        "assets": ["Projector", "Whiteboard", "Air Conditioner"],
     },
     {
         "name": "Lab Komputer A",
@@ -109,6 +110,7 @@ SEED_FACILITIES: list[SeedFacility] = [
         "image_url": "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
         "condition": "good",
         "contact_person": None,
+        "assets": ["Air Conditioner", "Sound System"],
     },
     {
         "name": "Aula Mini Fakultas",
@@ -119,6 +121,7 @@ SEED_FACILITIES: list[SeedFacility] = [
         "image_url": "https://images.unsplash.com/photo-1517457373958-b7bdd4587205",
         "condition": "good",
         "contact_person": None,
+        "assets": ["Sound System", "Projector"],
     },
 ]
 
@@ -171,7 +174,6 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "date_offset": 1,
         "start_hour": 9,
         "end_hour": 11,
-        "asset_name": "Projector",
         "extra_item_names": ["Extension Cable"],
     },
     {
@@ -184,7 +186,6 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "date_offset": 2,
         "start_hour": 13,
         "end_hour": 15,
-        "asset_name": None,
         "extra_item_names": [],
     },
     {
@@ -197,7 +198,6 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "date_offset": 3,
         "start_hour": 14,
         "end_hour": 16,
-        "asset_name": "Sound System",
         "extra_item_names": ["Folding Chair", "Extension Cable"],
     },
 ]
@@ -231,9 +231,10 @@ async def seed_users() -> tuple[int, int]:
     return inserted, skipped
 
 
-async def seed_facilities() -> tuple[int, int]:
+async def seed_facilities() -> tuple[int, int, int]:
     inserted = 0
     skipped = 0
+    fa_inserted = 0
 
     async with AsyncSessionLocal() as session:
         for payload in SEED_FACILITIES:
@@ -241,25 +242,43 @@ async def seed_facilities() -> tuple[int, int]:
             existing_facility = (await session.execute(query)).scalar_one_or_none()
 
             if existing_facility:
+                facility = existing_facility
                 skipped += 1
-                continue
+            else:
+                facility = Facility(
+                    name=payload["name"],
+                    code=payload["code"],
+                    location=payload["location"],
+                    capacity=payload["capacity"],
+                    threshold=payload["threshold"],
+                    image_url=payload["image_url"],
+                    condition=payload["condition"],
+                    contact_person=payload["contact_person"],
+                )
+                session.add(facility)
+                await session.flush()
+                inserted += 1
 
-            facility = Facility(
-                name=payload["name"],
-                code=payload["code"],
-                location=payload["location"],
-                capacity=payload["capacity"],
-                threshold=payload["threshold"],
-                image_url=payload["image_url"],
-                condition=payload["condition"],
-                contact_person=payload["contact_person"],
-            )
-            session.add(facility)
-            inserted += 1
+            # Associate assets
+            if payload.get("assets"):
+                for asset_name in payload["assets"]:
+                    query_asset = select(Asset).where(Asset.name == asset_name)
+                    asset = (await session.execute(query_asset)).scalar_one_or_none()
+                    if asset:
+                        # Check if association already exists
+                        query_fa = select(FacilityAsset).where(
+                            FacilityAsset.facility_id == facility.id,
+                            FacilityAsset.asset_id == asset.id
+                        )
+                        existing_fa = (await session.execute(query_fa)).scalar_one_or_none()
+                        if not existing_fa:
+                            fa = FacilityAsset(facility_id=facility.id, asset_id=asset.id)
+                            session.add(fa)
+                            fa_inserted += 1
 
         await session.commit()
 
-    return inserted, skipped
+    return inserted, skipped, fa_inserted
 
 
 async def seed_assets() -> tuple[int, int]:
@@ -321,34 +340,6 @@ async def seed_items() -> tuple[int, int, int]:
     return items_inserted, extra_inserted, skipped
 
 
-async def seed_facility_assets() -> int:
-    inserted = 0
-    async with AsyncSessionLocal() as session:
-        facilities = (await session.execute(select(Facility))).scalars().all()
-        assets = (await session.execute(select(Asset))).scalars().all()
-
-        if not facilities or not assets:
-            return 0
-
-        for facility in facilities:
-            # Add a couple of assets to each facility
-            for i in range(2):
-                asset = assets[i % len(assets)]
-                query = select(FacilityAsset).where(
-                    FacilityAsset.facility_id == facility.id,
-                    FacilityAsset.asset_id == asset.id
-                )
-                existing = (await session.execute(query)).scalar_one_or_none()
-
-                if not existing:
-                    fa = FacilityAsset(facility_id=facility.id, asset_id=asset.id)
-                    session.add(fa)
-                    inserted += 1
-
-        await session.commit()
-    return inserted
-
-
 async def seed_bookings() -> tuple[int, int]:
     inserted = 0
     skipped = 0
@@ -382,21 +373,12 @@ async def seed_bookings() -> tuple[int, int]:
                 skipped += 1
                 continue
 
-            # Get asset if specified
-            asset_id = None
-            if payload["asset_name"]:
-                query_asset = select(Asset).where(Asset.name == payload["asset_name"])
-                asset = (await session.execute(query_asset)).scalar_one_or_none()
-                if asset:
-                    asset_id = asset.id
-
             start_time = booking_date.replace(hour=payload["start_hour"], minute=0)
             end_time = booking_date.replace(hour=payload["end_hour"], minute=0)
 
             booking = Booking(
                 facility_id=facility.id,
                 user_id=user.id,
-                asset_id=asset_id,
                 purpose=payload["purpose"],
                 number_of_attendees=payload["number_of_attendees"],
                 document_url=payload["document_url"],
@@ -429,18 +411,17 @@ async def seed_bookings() -> tuple[int, int]:
 
 async def main() -> None:
     users_inserted, users_skipped = await seed_users()
-    facilities_inserted, facilities_skipped = await seed_facilities()
     assets_inserted, assets_skipped = await seed_assets()
+    facilities_inserted, facilities_skipped, fa_inserted = await seed_facilities()
     items_inserted, extra_inserted, items_skipped = await seed_items()
-    fa_inserted = await seed_facility_assets()
     bookings_inserted, bookings_skipped = await seed_bookings()
 
     print("Seeding complete:")
     print(f"- users: inserted={users_inserted}, skipped={users_skipped}")
-    print(f"- facilities: inserted={facilities_inserted}, skipped={facilities_skipped}")
     print(f"- assets: inserted={assets_inserted}, skipped={assets_skipped}")
-    print(f"- items: inserted={items_inserted}, extra={extra_inserted}, skipped={items_skipped}")
+    print(f"- facilities: inserted={facilities_inserted}, skipped={facilities_skipped}")
     print(f"- facility_assets: inserted={fa_inserted}")
+    print(f"- items: inserted={items_inserted}, extra={extra_inserted}, skipped={items_skipped}")
     print(f"- bookings: inserted={bookings_inserted}, skipped={bookings_skipped}")
 
 
