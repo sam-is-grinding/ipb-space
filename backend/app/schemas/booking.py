@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.schemas.item import ItemResponse
 
 
 class BookingCreate(BaseModel):
@@ -10,6 +12,14 @@ class BookingCreate(BaseModel):
     date_of_booking: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$")  # Format: YYYY-MM-DD
     start_time: str = Field(..., pattern=r"^\d{2}:\d{2}$")  # Format: HH:MM
     end_time: str = Field(..., pattern=r"^\d{2}:\d{2}$")  # Format: HH:MM
+
+class BookingItemResponse(BaseModel):
+    booking_id: int
+    item_id: int
+    quantity: int
+    item: ItemResponse
+
+    model_config = ConfigDict(from_attributes=True)
 
 class BookingResponse(BaseModel):
     id: int
@@ -25,5 +35,6 @@ class BookingResponse(BaseModel):
     end_time: datetime
     created_at: datetime
     updated_at: datetime | None = None
+    extra_items: List[BookingItemResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,19 +1,25 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.booking import Booking
+from sqlalchemy.orm import joinedload
+from app.models.booking import Booking, BookingItem
 
 class BookingRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def get_all(self):
-        result = await self.db.execute(select(Booking))
-        return result.scalars().all()
+        stmt = select(Booking).options(
+            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+        )
+        result = await self.db.execute(stmt)
+        return result.unique().scalars().all()
 
     async def get_by_id(self, booking_id: int):
-        stmt = select(Booking).where(Booking.id == booking_id)
+        stmt = select(Booking).where(Booking.id == booking_id).options(
+            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+        )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def create(self, booking_data: Booking):
         self.db.add(booking_data)
@@ -38,8 +44,10 @@ class BookingRepository:
             await self.db.refresh(booking)
             return booking
         return None
-    
+
     async def get_bookings_by_facility_id(self, facility_id: int):
-        stmt = select(Booking).where(Booking.facility_id == facility_id)
+        stmt = select(Booking).where(Booking.facility_id == facility_id).options(
+            joinedload(Booking.extra_items).joinedload(BookingItem.item)
+        )
         result = await self.db.execute(stmt)
-        return result.scalars().all()
+        return result.unique().scalars().all()

@@ -20,4 +20,4 @@ class Facility(Base):
     assets : Mapped[list["FacilityAsset"]] = relationship("FacilityAsset", back_populates="facility")
 
     created_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+    updated_at : Mapped[DateTime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())

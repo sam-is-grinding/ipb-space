@@ -43,4 +43,4 @@ class Booking(Base):
     extra_items: Mapped[List["BookingItem"]] = relationship("BookingItem", back_populates="booking")
 
     created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now())
+    updated_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
