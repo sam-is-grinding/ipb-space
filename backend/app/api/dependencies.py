@@ -40,7 +40,7 @@ async def get_current_user(
     # print(f"DEBUG: Token received by FastAPI: '{token}'")
 
     # Decode and validate the token 
-    print(f"DEBUG: Original token: {token}")
+    # print(f"DEBUG: Original token: {token}")
     payload = security.decode_token(token)
     # print(f"DEBUG: Payload extracted from token: {payload}")
 

@@ -99,8 +99,8 @@ class Security:
         :rtype: Dict[str, Any]
         :raises JWTError: If the token is invalid or expired
         """
-        print(f"Decoding token in security.py -> decode_token: {token}")  # Debug statement to check the token being decoded
-        print(f"Token segments: {token.count('.') + 1 if token else 0}")
+        # print(f"Decoding token in security.py -> decode_token: {token}")  # Debug statement to check the token being decoded
+        # print(f"Token segments: {token.count('.') + 1 if token else 0}")
 
         try:
             payload = decode(
@@ -109,7 +109,7 @@ class Security:
                 algorithms=[os.getenv("ALGORITHM", "HS256")]
             )
 
-            print(f"Decoded payload here: {payload}")  # Debug statement to check the decoded payload
+            # # print(f"Decoded payload here: {payload}")  # Debug statement to check the decoded payload
 
             # Check if token has expired
             exp = payload.get("exp")
