@@ -28,8 +28,7 @@ class BookingRepository:
     async def create(self, booking_data: Booking):
         self.db.add(booking_data)
         await self.db.commit()
-        await self.db.refresh(booking_data)
-        return booking_data
+        return await self.get_by_id(booking_data.id)
 
     async def delete(self, booking_id: int):
         booking = await self.get_by_id(booking_id)
@@ -45,8 +44,7 @@ class BookingRepository:
             for key, value in updated_data.items():
                 setattr(booking, key, value)
             await self.db.commit()
-            await self.db.refresh(booking)
-            return booking
+            return await self.get_by_id(booking_id)
         return None
 
     async def get_bookings_by_facility_id(self, facility_id: int):

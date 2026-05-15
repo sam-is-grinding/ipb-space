@@ -44,7 +44,7 @@ class Booking(Base):
     facility = relationship("Facility")
     user = relationship("User")
     asset: Mapped["Asset"] = relationship("Asset")
-    extra_items: Mapped[List["BookingItem"]] = relationship("BookingItem", back_populates="booking")
+    extra_items: Mapped[List["BookingItem"]] = relationship("BookingItem", back_populates="booking", cascade="all, delete-orphan")
 
     created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at : Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
