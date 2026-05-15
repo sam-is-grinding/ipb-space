@@ -34,6 +34,25 @@ DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/NAMA_DB
 SECRET_KEY=string_rahasia_untuk_jwt
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Document Store Configuration
+BOOKING_DOCUMENT_VENDOR=
+
+# Appwrite Configuration
+APPWRITE_ENDPOINT=
+APPWRITE_PROJECT_ID=
+APPWRITE_API_KEY=
+APPWRITE_BUCKET_ID=
+
+# Mailer Configuration
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_SERVER=
+MAIL_PORT=
+MAIL_STARTTLS=
+MAIL_SSL_TLS=
+MAIL_FROM=
+MAIL_FROM_NAME=
 ```
 ## Menjalankan dengan Docker Compose (Recommended)
 1. **Pastikan Docker sudah ter-install di mesin anda**
@@ -87,9 +106,9 @@ python seed.py
 ```
 
 Default akun yang dibuat:
-- `admin@ipbspace.local` / `Admin1234`
-- `manager@ipbspace.local` / `Manager1234`
-- `civitas@ipbspace.local` / `Civitas1234`
+- `admin@ipbspace.com` / `Admin1234`
+- `manager@ipbspace.com` / `Manager1234`
+- `civitas@ipbspace.com` / `Civitas1234`
 
 6. **Jalankan Server**
 ```bash

@@ -1,12 +1,21 @@
+import os
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
-from app.routers import facility_router, auth_router, user_router
+from app.routers import facility_router, auth_router, user_router, booking_router, test_router, asset_router, item_router
+
+# Import all models to ensure SQLAlchemy registry is populated
+import app.models
 
 app = FastAPI(title="IPB Space API")
+
+uploads_dir = os.getenv("UPLOADS_PUBLIC_DIR", "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +28,10 @@ app.add_middleware(
 app.include_router(facility_router.router)
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
+app.include_router(booking_router.router)
+app.include_router(test_router.router)
+app.include_router(asset_router.router)
+app.include_router(item_router.router)
 
 @app.get("/")
 def home():
