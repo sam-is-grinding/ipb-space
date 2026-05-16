@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Home from './pages/Home';
+import PublicExplore from './features/facilities/pages/PublicExplore';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -27,7 +27,7 @@ function App() {
       <Router>
         <Toaster position="bottom-right" />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<PublicExplore />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
