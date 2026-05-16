@@ -4,8 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import PublicExplore from './features/facilities/pages/PublicExplore';
 import FacilityCatalog from './features/facilities/pages/FacilityCatalog';
 import PublicCalendar from './features/calendar/pages/PublicCalendar';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
+import Login from './features/auth/pages/Login';
+import Register from './features/auth/pages/Register';
 
 const ProtectedRoute = ({ children, roleRequired }) => {
   const { user, loading } = useAuth();
@@ -27,7 +27,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="bottom-right" />
+        <Toaster position="top-right" />
         <Routes>
           <Route path="/" element={<PublicExplore />} />
           <Route path="/beranda" element={<Navigate to="/" replace />} />
