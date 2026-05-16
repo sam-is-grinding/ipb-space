@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import PublicExplore from './features/facilities/pages/PublicExplore';
+import FacilityCatalog from './features/facilities/pages/FacilityCatalog';
+import PublicCalendar from './features/calendar/pages/PublicCalendar';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -28,6 +30,9 @@ function App() {
         <Toaster position="bottom-right" />
         <Routes>
           <Route path="/" element={<PublicExplore />} />
+          <Route path="/beranda" element={<Navigate to="/" replace />} />
+          <Route path="/eksplorasi" element={<FacilityCatalog />} />
+          <Route path="/kalender" element={<PublicCalendar />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           

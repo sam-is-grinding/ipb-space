@@ -15,7 +15,7 @@ export default function PublicExplore() {
       try {
         const response = await facilityService.getAllFacilities();
         if (response.success) {
-          setFacilities(response.data);
+          setFacilities(response.data.items || []);
         }
       } catch (error) {
         console.error('Error fetching facilities:', error);
@@ -30,12 +30,12 @@ export default function PublicExplore() {
     <PublicLayout>
       {/* Hero Section */}
       <section 
-        className="relative w-full min-h-[500px] md:min-h-[70vh] flex flex-col items-center bg-cover bg-center"
+        className="relative w-full min-h-[650px] md:min-h-[72vh] flex flex-col items-center bg-cover bg-center pt-5"
         style={{ backgroundImage: `url(${bgRektorat})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-primary-container via-primary-container/70 to-transparent"></div>
         
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto flex flex-col items-center mt-auto mb-auto">
+        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto flex-1 flex flex-col items-center justify-center">
           {/* Branding Badge - Dark Blue on Light Glass */}
           <div className="bg-white/80 backdrop-blur-lg px-8 py-3 rounded-2xl mb-8 shadow-2xl border border-white/20 transform -rotate-1">
             <h2 className="text-primary-container font-black text-2xl md:text-4xl tracking-[0.3em] uppercase italic">
@@ -44,13 +44,15 @@ export default function PublicExplore() {
           </div>
 
           <h1 className="text-white font-black text-5xl md:text-8xl leading-[1.1] md:leading-[1] tracking-tighter drop-shadow-2xl">
-            Your Space.<br />Your Pace.<br /><span className="text-accent italic">Make it Happen.</span>
+            Your Space.<br />Your Pace.<br /><span className="text-accent italic">Make Your Place.</span>
           </h1>
         </div>
 
         {/* Floating Search Bar */}
-        <div className="bg-white rounded-card shadow-ambient p-2 max-w-2xl w-[calc(100%-2rem)] mx-auto -mb-8 relative z-20">
-          <Input placeholder="Cari nama gedung atau ruangan..." />
+        <div className="bg-white rounded-[2rem] shadow-2xl p-3 max-w-3xl w-[calc(100%-3rem)] mx-auto -mb-12 relative z-20 border border-white/50 backdrop-blur-sm">
+          <div className="bg-surface-lowest rounded-[1.5rem] p-1">
+            <Input placeholder="Cari nama gedung atau ruangan..." className="border-none shadow-none text-lg py-6" />
+          </div>
         </div>
       </section>
 
@@ -76,6 +78,7 @@ export default function PublicExplore() {
                 facilities.map((room) => (
                   <RoomCard 
                     key={room.id}
+                    id={room.id}
                     name={room.name}
                     capacity={room.capacity}
                     status={room.is_active ? "Tersedia" : "Dalam Perbaikan"}
