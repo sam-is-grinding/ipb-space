@@ -16,7 +16,7 @@ export default function RoomCard({ id, name, location, capacity, status, imageUr
 
   return (
     <div className="bg-white rounded-3xl shadow-ambient overflow-hidden flex flex-col transition-[transform,box-shadow] duration-300 hover:shadow-xl hover:-translate-y-1.5 will-change-transform transform-gpu border border-gray-100/60 select-none">
-      <div className="h-52 w-full bg-gray-100 relative overflow-hidden shrink-0">
+      <div className="w-full aspect-[4/3] bg-gray-100 relative overflow-hidden shrink-0">
         <img 
           src={imageUrl || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80"} 
           alt={name}

@@ -80,6 +80,7 @@ export default function PublicExplore() {
                     key={room.id}
                     id={room.id}
                     name={room.name}
+                    location={room.location}
                     capacity={room.capacity}
                     status={isFacilityAvailable(room) ? "Tersedia" : "Dalam Perbaikan"}
                     imageUrl={room.image_url}
