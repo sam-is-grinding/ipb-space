@@ -1,5 +1,4 @@
 import React from 'react';
-import PublicLayout from '../../../shared/components/layout/PublicLayout';
 import RoomCard from '../components/RoomCard';
 import Input from '../../../shared/components/ui/Input/Input';
 import bgRektorat from '../../../assets/images/background.jpg';
@@ -27,7 +26,7 @@ export default function PublicExplore() {
   }, []);
 
   return (
-    <PublicLayout>
+    <>
       {/* Hero Section */}
       <section 
         className="relative w-full min-h-[650px] md:min-h-[72vh] flex flex-col items-center bg-cover bg-center pt-5"
@@ -94,6 +93,6 @@ export default function PublicExplore() {
           )}
         </div>
       </section>
-    </PublicLayout>
+    </>
   );
 }

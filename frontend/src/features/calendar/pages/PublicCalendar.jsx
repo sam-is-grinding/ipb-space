@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PublicLayout from '../../../shared/components/layout/PublicLayout';
 import { usePublicCalendar } from '../hooks/usePublicCalendar';
 import { CaretLeft, CaretRight, CalendarBlank, PlusCircle } from '@phosphor-icons/react';
 import { useAuth } from '../../../context/AuthContext';
@@ -45,7 +44,7 @@ export default function PublicCalendar() {
   const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
   return (
-    <PublicLayout>
+    <>
       <div className="bg-surface py-12 px-4 md:px-8 min-h-screen">
         <div className="max-w-7xl mx-auto mt-4 md:mt-10">
           <div className="mb-10 text-center md:text-left">
@@ -223,6 +222,6 @@ export default function PublicCalendar() {
           </div>
         </div>
       </div>
-    </PublicLayout>
+    </>
   );
 }
