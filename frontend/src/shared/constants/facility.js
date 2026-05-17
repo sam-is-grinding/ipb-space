@@ -14,3 +14,23 @@ export const isFacilityAvailable = (facility) => {
   if (!facility) return false;
   return !facility.condition || facility.condition.toLowerCase() === FACILITY_CONDITION.GOOD;
 };
+
+/**
+ * Checks if a facility is currently in maintenance.
+ * @param {Object} facility
+ * @returns {boolean}
+ */
+export const isFacilityInMaintenance = (facility) => {
+  if (!facility) return false;
+  return facility.condition?.toLowerCase() === FACILITY_CONDITION.MAINTENANCE;
+};
+
+/**
+ * Checks if a facility is broken.
+ * @param {Object} facility
+ * @returns {boolean}
+ */
+export const isFacilityBroken = (facility) => {
+  if (!facility) return false;
+  return facility.condition?.toLowerCase() === FACILITY_CONDITION.BROKEN;
+};
