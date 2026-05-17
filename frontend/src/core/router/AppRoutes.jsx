@@ -19,6 +19,7 @@ import AdminValidationList from '../../features/facilities/pages/AdminValidation
 import FacilityManagement from '../../features/facilities/pages/FacilityManagement';
 import AdminBookingHistory from '../../features/facilities/pages/AdminBookingHistory';
 import AdminCalendarSchedule from '../../features/facilities/pages/AdminCalendarSchedule';
+import AdminSystemLogs from '../../features/facilities/pages/AdminSystemLogs';
 import BookingForm from '../../features/bookings/pages/BookingForm';
 import BookingHistory from '../../features/bookings/pages/BookingHistory';
 import BookingDetail from '../../features/bookings/pages/BookingDetail';
@@ -106,6 +107,7 @@ export default function AppRoutes() {
           <Route path="/admin/facility/dashboard" element={<FacilityManagement />} />
           <Route path="/admin/facility/history" element={<AdminBookingHistory />} />
           <Route path="/admin/facility/calendar" element={<AdminCalendarSchedule />} />
+          <Route path="/admin/facility/logs" element={<AdminSystemLogs />} />
           <Route path="/admin/facility/validations" element={<AdminValidationList />} />
           <Route path="/admin/facility/validations/:bookingId" element={<AdminValidationDetail />} />
         </Route>

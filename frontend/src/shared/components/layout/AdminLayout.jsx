@@ -8,7 +8,8 @@ import {
   UserCircle, 
   SignOut, 
   MagnifyingGlass,
-  CalendarBlank
+  CalendarBlank,
+  Scroll
 } from '@phosphor-icons/react';
 import logoIPBSpace from '../../../assets/icons/logo.png';
 
@@ -81,6 +82,14 @@ export default function AdminLayout({ children }) {
           >
             <ClockCounterClockwise size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
             Riwayat Peminjaman
+          </NavLink>
+
+          <NavLink 
+            to="/admin/facility/logs" 
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+          >
+            <Scroll size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
+            Log Audit Sistem
           </NavLink>
         </nav>
         
