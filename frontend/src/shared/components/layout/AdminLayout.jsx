@@ -9,7 +9,8 @@ import {
   SignOut, 
   MagnifyingGlass,
   CalendarBlank,
-  Scroll
+  Scroll,
+  SquaresFour
 } from '@phosphor-icons/react';
 import logoIPBSpace from '../../../assets/icons/logo.png';
 
@@ -51,6 +52,14 @@ export default function AdminLayout({ children }) {
           </div>
 
           <p className="text-xs font-bold text-blue-200/50 uppercase tracking-wider mb-3 px-3">Menu Utama</p>
+
+          <NavLink 
+            to="/admin/facility/overview" 
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+          >
+            <SquaresFour size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
+            Dashboard Utama
+          </NavLink>
 
           <NavLink 
             to="/admin/facility/validations" 

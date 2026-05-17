@@ -15,6 +15,7 @@ import Login from '../../features/auth/pages/Login';
 import Register from '../../features/auth/pages/Register';
 import CivitasDashboard from '../../features/dashboard/pages/CivitasDashboard';
 import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
+import FacilityAdminOverview from '../../features/dashboard/pages/FacilityAdminOverview';
 import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
 import FacilityManagement from '../../features/facilities/pages/FacilityManagement';
 import AdminBookingHistory from '../../features/facilities/pages/AdminBookingHistory';
@@ -104,6 +105,7 @@ export default function AppRoutes() {
       {/* 4. FACILITY ADMIN ROUTES */}
       <Route element={<ProtectedRoute allowedRoles={['FacilityAdmin', 'SuperAdmin']} />}>
         <Route element={<AdminLayout><Outlet /></AdminLayout>}>
+          <Route path="/admin/facility/overview" element={<FacilityAdminOverview />} />
           <Route path="/admin/facility/dashboard" element={<FacilityManagement />} />
           <Route path="/admin/facility/history" element={<AdminBookingHistory />} />
           <Route path="/admin/facility/calendar" element={<AdminCalendarSchedule />} />
