@@ -65,3 +65,8 @@ class UserResponse(UserBase):
 class UserInDB(UserResponse):
     """Model for user data stored in the database, extending UserResponse with hashed password field."""
     hashed_password: str
+
+class UserUpdate(BaseModel):
+    fullname: str = Field(..., min_length=3)
+    idnum: str
+    email: EmailStr
