@@ -43,8 +43,19 @@ export const AuthProvider = ({ children }) => {
     window.location.href = '/login';
   };
 
+  const updateProfile = async (fullname, idnum, email) => {
+    const response = await api.put('/users/me', { fullname, idnum, email });
+    if (response.data.success) {
+      const updatedUser = response.data.data.user;
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      return updatedUser;
+    }
+    throw new Error('Update profile failed');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
