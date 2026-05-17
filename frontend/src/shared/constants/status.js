@@ -33,6 +33,11 @@ export const STATUS_MAP = {
     bg: 'bg-error-container',
     text: 'text-on-error-container',
     label: 'Dibatalkan'
+  },
+  'checked-in': {
+    bg: 'bg-green-50 text-green-700 border border-green-200',
+    text: 'text-green-700',
+    label: 'Checked In'
   }
 };
 
@@ -47,4 +52,5 @@ export const BOOKING_STATUS = {
   APPROVED: 'approved',
   REJECTED: 'rejected',
   CANCELED: 'canceled',
+  CHECKED_IN: 'checked-in',
 };
