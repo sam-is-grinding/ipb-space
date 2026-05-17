@@ -2,11 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { Users, Desktop, Wind, Wrench, CheckCircle, Package } from '@phosphor-icons/react';
 import { facilityService } from '../services/facilityService';
 import { toast } from 'react-hot-toast';
+import FacilityStatusModal from '../components/FacilityStatusModal';
 
 export default function FacilityManagement() {
   const [facilities, setFacilities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('Semua Status');
+  const [selectedFacility, setSelectedFacility] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (facility) => {
+    setSelectedFacility(facility);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveStatus = async (id, newStatus, conditionNotes) => {
+    try {
+      toast.loading('Menyimpan perubahan...', { id: 'facilityUpdate' });
+      await facilityService.updateFacility(id, { condition: newStatus });
+      setFacilities(prev => prev.map(f => f.id === id ? { ...f, condition: newStatus } : f));
+      toast.success('Status ruangan berhasil diperbarui!', { id: 'facilityUpdate' });
+      setIsModalOpen(false);
+      setSelectedFacility(null);
+    } catch (error) {
+      console.error("Gagal update facility:", error);
+      toast.error('Gagal memperbarui status ruangan.', { id: 'facilityUpdate' });
+      throw error;
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -151,7 +174,7 @@ export default function FacilityManagement() {
 
                   <div className="mt-auto">
                     <button 
-                      onClick={() => {}}
+                      onClick={() => openModal(f)}
                       className="w-full py-2.5 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm"
                     >
                       Ubah Status & Kondisi
@@ -163,6 +186,13 @@ export default function FacilityManagement() {
           })}
         </div>
       )}
+
+      <FacilityStatusModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        facility={selectedFacility}
+        onSave={handleSaveStatus}
+      />
     </div>
   );
 }
