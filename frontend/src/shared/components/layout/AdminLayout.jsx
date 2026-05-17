@@ -10,10 +10,7 @@ import {
   MagnifyingGlass,
   CalendarBlank,
   Scroll,
-  SquaresFour,
-  Bell,
-  Question,
-  Gear
+  SquaresFour
 } from '@phosphor-icons/react';
 import logoIPBSpace from '../../../assets/icons/logo.png';
 
@@ -143,18 +140,7 @@ export default function AdminLayout({ children }) {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Header Action Buttons (Notification, Help, Settings) */}
-            <div className="flex items-center gap-1.5 md:gap-2 text-slate-500">
-              <button className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-100 hover:text-primary transition-colors">
-                <Bell size={18} weight="bold" />
-              </button>
-              <button className="hidden md:flex w-9 h-9 rounded-full bg-slate-50 items-center justify-center border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-100 hover:text-primary transition-colors">
-                <Question size={18} weight="bold" />
-              </button>
-              <button className="hidden md:flex w-9 h-9 rounded-full bg-slate-50 items-center justify-center border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-100 hover:text-primary transition-colors">
-                <Gear size={18} weight="bold" />
-              </button>
-            </div>
+            {/* Action buttons removed per user request for minimalist aesthetic */}
             {/* Mobile Logout Button */}
             <button 
               onClick={handleLogout}

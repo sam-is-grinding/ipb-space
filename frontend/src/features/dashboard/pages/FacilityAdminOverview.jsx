@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CalendarCheck, Door, ClockCounterClockwise, IdentificationBadge } from '@phosphor-icons/react';
 import { bookingService } from '../../bookings/services/bookingService';
 import { facilityService } from '../../facilities/services/facilityService';
+import { userService } from '../../users/services/userService';
 import { useValidationLookup } from '../../facilities/hooks/useValidationLookup';
 
 export default function FacilityAdminOverview() {
-  const [totalBookings, setTotalBookings] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [activeFacilities, setActiveFacilities] = useState(0);
-  const [totalFacilitiesCount, setTotalFacilitiesCount] = useState(0);
-  const [recentBookings, setRecentBookings] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [facilities, setFacilities] = useState([]);
+  const [facilityAdminCount, setFacilityAdminCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const { isLookupLoading, facilityMap, userMap } = useValidationLookup();
@@ -20,22 +19,22 @@ export default function FacilityAdminOverview() {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        const [bookingsRes, facilitiesRes] = await Promise.all([
+        const [bookingsRes, facilitiesRes, usersRes] = await Promise.all([
           bookingService.getAllBookings(),
-          facilityService.getAllFacilities()
+          facilityService.getAllFacilities(),
+          userService.getAllUsers()
         ]);
 
         if (isMounted) {
-          const bookings = bookingsRes?.data?.items || bookingsRes?.items || bookingsRes?.data || [];
-          const facilities = facilitiesRes?.data?.items || facilitiesRes?.items || facilitiesRes?.data || [];
+          const bList = bookingsRes?.data?.items || bookingsRes?.items || bookingsRes?.data || [];
+          const fList = facilitiesRes?.data?.items || facilitiesRes?.items || facilitiesRes?.data || [];
+          const uList = usersRes?.data?.items || usersRes?.items || usersRes?.data || [];
 
-          setTotalBookings(bookings.length);
-          setPendingCount(bookings.filter(b => b.status && b.status.toLowerCase() === 'pending').length);
-          
-          setTotalFacilitiesCount(facilities.length);
-          setActiveFacilities(facilities.filter(f => !f.condition || f.condition.toLowerCase() === 'good' || f.condition.toLowerCase() === 'tersedia').length);
-
-          setRecentBookings(bookings.slice(0, 3));
+          setBookings(bList);
+          setFacilities(fList);
+          setFacilityAdminCount(
+            uList.filter(u => u.role && (u.role.toLowerCase() === 'facility_manager' || u.role.toLowerCase() === 'facilityadmin')).length
+          );
         }
       } catch (error) {
         console.error("Gagal memuat data dashboard:", error);
@@ -48,16 +47,77 @@ export default function FacilityAdminOverview() {
     return () => { isMounted = false; };
   }, []);
 
-  // Mock weekly data mapped exactly for pure Tailwind CSS bar chart rendering
-  const weeklyData = [
-    { day: 'Sen', value: 45, height: 'h-[45%]' },
-    { day: 'Sel', value: 65, height: 'h-[65%]' },
-    { day: 'Rab', value: 85, height: 'h-[85%]' },
-    { day: 'Kam', value: 55, height: 'h-[55%]' },
-    { day: 'Jum', value: 95, height: 'h-[95%]' },
-    { day: 'Sab', value: 30, height: 'h-[30%]' },
-    { day: 'Min', value: 15, height: 'h-[15%]' },
+  // --- DYNAMIC STAT CARD COMPUTATIONS ---
+  const totalBookings = bookings.length;
+  const pendingCount = bookings.filter(b => b.status && b.status.toLowerCase() === 'pending').length;
+  const activeFacilities = facilities.filter(f => !f.condition || f.condition.toLowerCase() === 'good' || f.condition.toLowerCase() === 'tersedia').length;
+
+  // --- DYNAMIC TOP ROOMS (Frequency Map) ---
+  const topRooms = useMemo(() => {
+    const freqMap = {};
+    bookings.forEach(b => {
+      if (b.facility_id) {
+        freqMap[b.facility_id] = (freqMap[b.facility_id] || 0) + 1;
+      }
+    });
+    return Object.entries(freqMap)
+      .map(([facilityId, count]) => ({ facilityId, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [bookings]);
+
+  const rankBadges = [
+    { icon: '🏆', color: 'bg-yellow-100 text-yellow-600' },
+    { icon: '🥈', color: 'bg-slate-100 text-slate-500' },
+    { icon: '🥉', color: 'bg-orange-100 text-orange-600' },
   ];
+
+  // --- DYNAMIC WEEKLY BAR CHART ---
+  const weeklyData = useMemo(() => {
+    const dayLabels = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const counts = [0, 0, 0, 0, 0, 0, 0]; // Sun=0 through Sat=6
+
+    bookings.forEach(b => {
+      const dateStr = b.date_of_booking || b.start_time;
+      if (!dateStr) return;
+      const dayIndex = new Date(dateStr).getDay(); // 0=Sun, 6=Sat
+      counts[dayIndex]++;
+    });
+
+    // Reorder: Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(0)
+    const ordered = [
+      { day: 'Sen', value: counts[1] },
+      { day: 'Sel', value: counts[2] },
+      { day: 'Rab', value: counts[3] },
+      { day: 'Kam', value: counts[4] },
+      { day: 'Jum', value: counts[5] },
+      { day: 'Sab', value: counts[6] },
+      { day: 'Min', value: counts[0] },
+    ];
+
+    const maxCount = Math.max(...ordered.map(d => d.value), 1); // min 1 to avoid division by zero
+    return ordered.map(d => ({
+      ...d,
+      heightPercent: Math.round((d.value / maxCount) * 100)
+    }));
+  }, [bookings]);
+
+  // --- DYNAMIC RECENT ACTIVITY ---
+  const recentBookings = useMemo(() => {
+    return [...bookings]
+      .sort((a, b) => new Date(b.updated_at || b.created_at || b.date_of_booking) - new Date(a.updated_at || a.created_at || a.date_of_booking))
+      .slice(0, 3);
+  }, [bookings]);
+
+  const getActionText = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'approved') return 'Menyetujui peminjaman';
+    if (s === 'rejected') return 'Menolak peminjaman';
+    if (s === 'cancelled') return 'Membatalkan peminjaman';
+    if (s === 'checked_in') return 'Check-in ruangan';
+    if (s === 'pending') return 'Mengajukan peminjaman';
+    return 'Memperbarui peminjaman';
+  };
 
   const StatCard = ({ title, value, subtitle, icon: Icon, colorClass }) => (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5 transition-transform hover:-translate-y-1">
@@ -95,7 +155,7 @@ export default function FacilityAdminOverview() {
         />
         <StatCard 
           title="Ruangan Aktif" 
-          value={`${activeFacilities}/${totalFacilitiesCount}`} 
+          value={`${activeFacilities}/${facilities.length}`} 
           subtitle="tersedia"
           icon={Door} 
           colorClass="bg-emerald-50 text-emerald-600" 
@@ -109,7 +169,7 @@ export default function FacilityAdminOverview() {
         />
         <StatCard 
           title="Total Facility Admin" 
-          value={8} 
+          value={facilityAdminCount} 
           subtitle="operator aktif"
           icon={IdentificationBadge} 
           colorClass="bg-purple-50 text-purple-600" 
@@ -118,17 +178,17 @@ export default function FacilityAdminOverview() {
 
       {/* Middle Row: Chart & Top Rooms */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Pure CSS Bar Chart */}
+        {/* Dynamic CSS Bar Chart */}
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-lg font-black text-slate-800 tracking-tight">Statistik Peminjaman Mingguan</h3>
-              <p className="text-sm font-medium text-slate-500 mt-0.5">Intensitas reservasi dalam 7 hari terakhir.</p>
+              <p className="text-sm font-medium text-slate-500 mt-0.5">Distribusi reservasi berdasarkan hari dalam minggu.</p>
             </div>
           </div>
           
           <div className="h-64 flex items-end justify-between gap-2 md:gap-6 pt-4 border-b border-slate-100 pb-2 relative">
-            {/* Y-Axis Grid Lines Placeholder */}
+            {/* Y-Axis Grid Lines */}
             <div className="absolute left-0 w-full h-full flex flex-col justify-between pointer-events-none pb-8 opacity-40">
               <div className="border-t border-dashed border-slate-200 w-full"></div>
               <div className="border-t border-dashed border-slate-200 w-full"></div>
@@ -143,8 +203,11 @@ export default function FacilityAdminOverview() {
                   {data.value} Trx
                 </div>
                 
-                {/* Tailored Bar Component */}
-                <div className={`w-full max-w-[40px] md:max-w-[60px] ${data.height} bg-accent/20 hover:bg-accent rounded-t-xl transition-all cursor-pointer border-b-4 border-accent relative overflow-hidden group-hover:shadow-md`}>
+                {/* Dynamic Bar — inline style for true data-driven height */}
+                <div 
+                  className="w-full max-w-[40px] md:max-w-[60px] bg-accent/20 hover:bg-accent rounded-t-xl transition-all cursor-pointer border-b-4 border-accent relative overflow-hidden group-hover:shadow-md"
+                  style={{ height: `${data.heightPercent}%`, minHeight: data.value > 0 ? '8px' : '2px' }}
+                >
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-accent/40 to-transparent h-1/2"></div>
                 </div>
                 
@@ -155,29 +218,33 @@ export default function FacilityAdminOverview() {
           </div>
         </div>
 
-        {/* Top Rooms Ranking */}
+        {/* Dynamic Top Rooms Ranking */}
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1">
           <div>
             <h3 className="text-lg font-black text-slate-800 tracking-tight">Ruangan Teratas</h3>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">Paling sering dipinjam bulan ini.</p>
+            <p className="text-sm font-medium text-slate-500 mt-0.5">Paling sering dipinjam.</p>
           </div>
           <div className="mt-8 space-y-6">
-            {[
-              { name: 'Auditorium FMIPA', count: 142, icon: '🏆', color: 'bg-yellow-100 text-yellow-600' },
-              { name: 'Ruang Seminar A', count: 98, icon: '🥈', color: 'bg-slate-100 text-slate-500' },
-              { name: 'Lab Komputer 1', count: 76, icon: '🥉', color: 'bg-orange-100 text-orange-600' },
-              { name: 'Ruang Diskusi R1', count: 45, icon: '4', color: 'bg-slate-50 text-slate-400 font-black' },
-            ].map((room, idx) => (
-              <div key={idx} className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm ${room.color}`}>
-                  {room.icon}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-bold text-slate-700">{room.name}</h4>
-                  <p className="text-xs font-semibold text-slate-400">{room.count} kali dipinjam</p>
-                </div>
-              </div>
-            ))}
+            {isLoading || isLookupLoading ? (
+              <p className="text-sm text-slate-400 animate-pulse font-medium">Menghitung frekuensi...</p>
+            ) : topRooms.length === 0 ? (
+              <p className="text-sm text-slate-400 font-medium">Belum ada data peminjaman.</p>
+            ) : (
+              topRooms.map((room, idx) => {
+                const badge = rankBadges[idx] || { icon: `${idx + 1}`, color: 'bg-slate-50 text-slate-400 font-black' };
+                return (
+                  <div key={idx} className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm ${badge.color}`}>
+                      {badge.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-bold text-slate-700">{facilityMap[room.facilityId] || `Fasilitas #${room.facilityId}`}</h4>
+                      <p className="text-xs font-semibold text-slate-400">{room.count} kali dipinjam</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
@@ -187,7 +254,7 @@ export default function FacilityAdminOverview() {
         <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-black text-slate-800 tracking-tight">Aktivitas Terbaru</h3>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">Transaksi peminjaman yang baru saja masuk.</p>
+            <p className="text-sm font-medium text-slate-500 mt-0.5">Transaksi peminjaman yang baru saja diperbarui.</p>
           </div>
           <button className="text-sm font-bold text-accent hover:text-accent/80 transition-colors px-4 py-2 bg-accent/10 rounded-lg">
             Lihat Semua
@@ -198,8 +265,8 @@ export default function FacilityAdminOverview() {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Pemohon</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Agenda & Ruangan</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Waktu Mulai</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Aksi & Ruangan</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Waktu</th>
                 <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-center">Status</th>
               </tr>
             </thead>
@@ -226,8 +293,9 @@ export default function FacilityAdminOverview() {
 
                   const userName = userMap[b.user_id] || `Pemohon #${b.user_id}`;
                   const roomName = facilityMap[b.facility_id] || 'Ruangan';
-                  const startDate = b.start_time || b.date_of_booking;
-                  const formattedDate = startDate ? new Date(startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                  const actionText = getActionText(b.status);
+                  const ts = b.updated_at || b.created_at || b.date_of_booking;
+                  const formattedDate = ts ? new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
@@ -235,7 +303,7 @@ export default function FacilityAdminOverview() {
                         <div className="font-bold text-slate-700 text-sm">{userName}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="font-bold text-slate-700 text-sm">{b.purpose || 'Tanpa Agenda'}</div>
+                        <div className="font-bold text-slate-700 text-sm">{actionText}</div>
                         <div className="text-xs font-semibold text-slate-500 mt-1">{roomName}</div>
                       </td>
                       <td className="py-4 px-6 font-semibold text-slate-600 text-sm">{formattedDate}</td>
