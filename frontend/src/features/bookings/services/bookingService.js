@@ -18,6 +18,14 @@ export const bookingService = {
   },
 
   /**
+   * Get bookings for the currently authenticated user
+   * @returns {Promise<any>}
+   */
+  getMyBookings: async () => {
+    return await apiClient.get('/bookings/my');
+  },
+
+  /**
    * Get bookings for a specific facility
    * @param {string|number} facilityId 
    * @returns {Promise<any>}
