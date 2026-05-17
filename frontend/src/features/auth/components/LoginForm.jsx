@@ -46,11 +46,11 @@ export default function LoginForm() {
       toast.success('Selamat datang!');
       
       if (user.role === 'civitas') {
-        navigate('/civitas/beranda');
+        navigate('/civitas/dashboard');
       } else if (user.role === 'facility_manager') {
-        navigate('/facility-admin/dashboard');
+        navigate('/admin/facility/dashboard');
       } else if (user.role === 'admin') {
-        navigate('/super-admin/dashboard');
+        navigate('/admin/super/master-data');
       } else {
         navigate('/');
       }

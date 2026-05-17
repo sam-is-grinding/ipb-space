@@ -33,8 +33,16 @@ import ProtectedRoute from './ProtectedRoute';
  * layout depending on the user's authentication and role status.
  */
 const DynamicLayoutWrapper = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent shadow-md"></div>
+      </div>
+    );
+  }
+
   // Guest gets MainLayout (which acts as PublicLayout for guests)
   if (!user) {
     return (

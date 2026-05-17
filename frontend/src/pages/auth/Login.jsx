@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -8,8 +8,22 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loading: authLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === 'civitas') {
+        navigate('/civitas/dashboard');
+      } else if (user.role === 'facility_manager') {
+        navigate('/admin/facility/dashboard');
+      } else if (user.role === 'admin') {
+        navigate('/admin/super/master-data');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,16 +34,16 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const user = await login(email, password);
+      const userObj = await login(email, password);
       toast.success('Login berhasil!');
       
       // Role-based redirect
-      if (user.role === 'civitas') {
-        navigate('/civitas/beranda');
-      } else if (user.role === 'facility_manager') {
-        navigate('/facility-admin/dashboard');
-      } else if (user.role === 'admin') {
-        navigate('/super-admin/dashboard');
+      if (userObj.role === 'civitas') {
+        navigate('/civitas/dashboard');
+      } else if (userObj.role === 'facility_manager') {
+        navigate('/admin/facility/dashboard');
+      } else if (userObj.role === 'admin') {
+        navigate('/admin/super/master-data');
       } else {
         navigate('/');
       }
@@ -40,6 +54,14 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center">
+        <CircleNotch size={40} className="animate-spin text-[#02275D]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-end sm:justify-center items-center">

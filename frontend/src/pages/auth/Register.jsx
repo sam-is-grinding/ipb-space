@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -14,8 +14,22 @@ export default function Register() {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, loading: authLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      if (user.role === 'civitas') {
+        navigate('/civitas/dashboard');
+      } else if (user.role === 'facility_manager') {
+        navigate('/admin/facility/dashboard');
+      } else if (user.role === 'admin') {
+        navigate('/admin/super/master-data');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,6 +79,14 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center">
+        <CircleNotch size={40} className="animate-spin text-[#02275D]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F7FB] flex flex-col justify-center items-center py-10 px-4">
