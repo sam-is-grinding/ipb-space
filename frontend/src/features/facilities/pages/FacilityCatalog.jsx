@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PublicLayout from '../../../shared/components/layout/PublicLayout';
 import RoomCard from '../components/RoomCard';
 import Input from '../../../shared/components/ui/Input/Input';
 import { useFacilities } from '../hooks/useFacilities';
@@ -19,7 +18,7 @@ export default function FacilityCatalog() {
   });
 
   return (
-    <PublicLayout>
+    <>
       <div className="bg-surface py-8 px-4 md:px-8 min-h-screen">
         <div className="max-w-7xl mx-auto mt-2 md:mt-4">
           <div className="mb-6 text-center md:text-left">
@@ -95,6 +94,6 @@ export default function FacilityCatalog() {
           )}
         </div>
       </div>
-    </PublicLayout>
+    </>
   );
 }
