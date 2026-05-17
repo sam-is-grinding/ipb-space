@@ -52,26 +52,26 @@ export default function AdminLayout({ children }) {
 
           <NavLink 
             to="/admin/facility/validations" 
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-accent text-white shadow-md' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'}`}
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
           >
             <Layout size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
             Dashboard Validasi
           </NavLink>
 
           <NavLink 
-            to="/admin/facility/master" 
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-accent text-white shadow-md' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'}`}
+            to="/admin/facility/dashboard" 
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
           >
             <Door size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
-            Master Ruangan
+            Manajemen Ruangan
           </NavLink>
 
           <NavLink 
             to="/admin/facility/history" 
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-accent text-white shadow-md' : 'text-blue-100/70 hover:bg-white/10 hover:text-white'}`}
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
           >
             <ClockCounterClockwise size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
-            Riwayat Transaksi
+            Riwayat Peminjaman
           </NavLink>
         </nav>
         
