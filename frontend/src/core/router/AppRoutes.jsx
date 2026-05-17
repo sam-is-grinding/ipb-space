@@ -14,6 +14,7 @@ import Login from '../../features/auth/pages/Login';
 import Register from '../../features/auth/pages/Register';
 import CivitasDashboard from '../../features/dashboard/pages/CivitasDashboard';
 import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
+import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -54,7 +55,6 @@ const DynamicLayoutWrapper = () => {
 const BookingHistory = () => <div className="p-10 text-center">Riwayat Peminjaman (Segera Hadir)</div>;
 const BookingForm = () => <div className="p-10 text-center">Form Peminjaman (Segera Hadir)</div>;
 const FacilityStatus = () => <div className="p-10 text-center">Dashboard Admin Fasilitas</div>;
-const AdminValidationList = () => <div className="p-10 text-center">Daftar Validasi</div>;
 const AdminValidationDetail = () => <div className="p-10 text-center">Detail Validasi</div>;
 const AdminMasterData = () => <div className="p-10 text-center">Master Data</div>;
 const AdminManagement = () => <div className="p-10 text-center">Manajemen Pengguna</div>;
