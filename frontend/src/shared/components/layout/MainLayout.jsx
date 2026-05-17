@@ -1,8 +1,14 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { House, Compass, CalendarBlank, ClockCounterClockwise, UserCircle, SignOut } from '@phosphor-icons/react';
+import { UserCircle, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '../../../context/AuthContext';
 import logoIPBSpace from '../../../assets/icons/logo.png';
+import { 
+  PUBLIC_DESKTOP_LINKS, 
+  PUBLIC_MOBILE_LINKS, 
+  CIVITAS_DESKTOP_LINKS, 
+  CIVITAS_MOBILE_LINKS 
+} from '../../constants/navigation';
 
 export default function MainLayout({ children }) {
   const location = useLocation();
@@ -18,13 +24,17 @@ export default function MainLayout({ children }) {
   };
 
   const isLoggedIn = !!user;
-
   const homePath = isLoggedIn ? '/civitas/beranda' : '/';
 
-  const isHomeActive = path === '/' || path === '/civitas/dashboard' || path === '/civitas/beranda';
-  const isExploreActive = path.startsWith('/facilities/explore');
-  const isCalendarActive = path.startsWith('/calendar');
-  const isHistoryActive = path.startsWith('/civitas/history') || path.startsWith('/civitas/riwayat');
+  const desktopLinks = isLoggedIn ? CIVITAS_DESKTOP_LINKS : PUBLIC_DESKTOP_LINKS;
+  const mobileLinks = isLoggedIn ? CIVITAS_MOBILE_LINKS : PUBLIC_MOBILE_LINKS;
+
+  const isActive = (linkPath) => {
+    if (linkPath === '/' || linkPath === '/civitas/dashboard') {
+      return path === '/' || path === '/civitas/dashboard' || path === '/civitas/beranda';
+    }
+    return path.startsWith(linkPath);
+  };
 
   return (
     <div className="min-h-screen bg-surface flex flex-col font-sans">
@@ -39,48 +49,22 @@ export default function MainLayout({ children }) {
         
         {/* Navigation Links in Center */}
         <div className="flex gap-2 bg-blue-900/20 p-1.5 rounded-full border border-white/5">
-          <Link 
-            to={homePath} 
-            className={`px-6 py-2 rounded-full text-base font-bold transition-all ${
-              isHomeActive 
-                ? 'bg-white text-primary-container shadow-lg scale-105' 
-                : 'text-blue-100/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Beranda
-          </Link>
-          <Link 
-            to="/facilities/explore" 
-            className={`px-6 py-2 rounded-full text-base font-bold transition-all ${
-              isExploreActive 
-                ? 'bg-white text-primary-container shadow-lg scale-105' 
-                : 'text-blue-100/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Eksplorasi
-          </Link>
-          <Link 
-            to="/calendar" 
-            className={`px-6 py-2 rounded-full text-base font-bold transition-all ${
-              isCalendarActive 
-                ? 'bg-white text-primary-container shadow-lg scale-105' 
-                : 'text-blue-100/70 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            Kalender Publik
-          </Link>
-          {isLoggedIn && (
-            <Link 
-              to="/civitas/history" 
-              className={`px-6 py-2 rounded-full text-base font-bold transition-all ${
-                isHistoryActive 
-                  ? 'bg-white text-primary-container shadow-lg scale-105' 
-                  : 'text-blue-100/70 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              Riwayat
-            </Link>
-          )}
+          {desktopLinks.map((link) => {
+            const active = isActive(link.path);
+            return (
+              <Link 
+                key={link.path}
+                to={link.path} 
+                className={`px-6 py-2 rounded-full text-base font-bold transition-all ${
+                  active 
+                    ? 'bg-white text-primary-container shadow-lg scale-105' 
+                    : 'text-blue-100/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </div>
         
         {/* Right Section (Conditional Auth Actions) */}
@@ -149,54 +133,25 @@ export default function MainLayout({ children }) {
 
       {/* Bottom Navbar (Mobile Only) */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-surface-container/95 backdrop-blur-xl border-t border-blue-200 flex md:hidden pb-safe shadow-[0_-4px_20px_rgba(2,39,93,0.1)]">
-        <Link 
-          to={homePath}
-          className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${isHomeActive ? 'text-primary-container scale-110' : 'text-blue-900/40'}`}
-        >
-          <House size={24} weight={isHomeActive ? 'fill' : 'regular'} />
-          <span className="text-[10px] mt-1 font-bold uppercase tracking-wider">Beranda</span>
-          {isHomeActive && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
-        </Link>
-        
-        <Link 
-          to="/facilities/explore"
-          className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${isExploreActive ? 'text-primary-container scale-110' : 'text-blue-900/40'}`}
-        >
-          <Compass size={24} weight={isExploreActive ? 'fill' : 'regular'} />
-          <span className="text-[10px] mt-1 font-bold uppercase tracking-wider">Eksplorasi</span>
-          {isExploreActive && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
-        </Link>
-        
-        <Link 
-          to="/calendar"
-          className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${isCalendarActive ? 'text-primary-container scale-110' : 'text-blue-900/40'}`}
-        >
-          <CalendarBlank size={24} weight={isCalendarActive ? 'fill' : 'regular'} />
-          <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-center leading-tight">Kalender</span>
-          {isCalendarActive && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
-        </Link>
-        
-        {isLoggedIn && (
-          <>
+        {mobileLinks.map((link) => {
+          const Icon = link.icon;
+          const active = isActive(link.path);
+          return (
             <Link 
-              to="/civitas/history"
-              className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${isHistoryActive ? 'text-primary-container scale-110' : 'text-blue-900/40'}`}
+              key={link.path}
+              to={link.path}
+              className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${
+                active ? 'text-primary-container scale-110' : 'text-blue-900/40'
+              }`}
             >
-              <ClockCounterClockwise size={24} weight={isHistoryActive ? 'fill' : 'regular'} />
-              <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-center leading-tight">Riwayat</span>
-              {isHistoryActive && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
+              <Icon size={24} weight={active ? 'fill' : 'regular'} />
+              <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-center leading-tight">
+                {link.name}
+              </span>
+              {active && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
             </Link>
-            
-            <Link 
-              to="/civitas/profile"
-              className={`flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all ${path === '/civitas/profile' ? 'text-primary-container scale-110' : 'text-blue-900/40'}`}
-            >
-              <UserCircle size={24} weight={path === '/civitas/profile' ? 'fill' : 'regular'} />
-              <span className="text-[10px] mt-1 font-bold uppercase tracking-wider text-center leading-tight">Profil</span>
-              {path === '/civitas/profile' && <div className="w-1 h-1 bg-primary-container rounded-full mt-0.5"></div>}
-            </Link>
-          </>
-        )}
+          );
+        })}
       </nav>
     </div>
   );
