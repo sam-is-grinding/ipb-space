@@ -24,6 +24,11 @@ export const STATUS_MAP = {
     text: 'text-on-error-container',
     label: 'Ditolak'
   },
+  canceled: {
+    bg: 'bg-error-container',
+    text: 'text-on-error-container',
+    label: 'Dibatalkan'
+  },
   cancelled: {
     bg: 'bg-error-container',
     text: 'text-on-error-container',
@@ -35,4 +40,11 @@ export const DEFAULT_STATUS = {
   bg: 'bg-gray-100',
   text: 'text-gray-800',
   label: 'Unknown'
+};
+
+export const BOOKING_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  CANCELED: 'canceled',
 };
