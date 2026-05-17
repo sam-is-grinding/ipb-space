@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import publicApiClient from '../../../shared/services/api/publicApiClient';
+import { BOOKING_STATUS } from '../../../shared/constants/status';
 
 export const usePublicCalendar = () => {
   const [bookings, setBookings] = useState([]);
@@ -31,7 +32,10 @@ export const usePublicCalendar = () => {
           });
 
           const activeBookings = allBookings.filter(
-            (b) => ['Approved', 'Ongoing', 'approved', 'ongoing'].includes(b.status)
+            (b) => {
+              const status = b.status?.toLowerCase();
+              return status === BOOKING_STATUS.APPROVED || status === 'ongoing';
+            }
           );
           
           setBookings(activeBookings);

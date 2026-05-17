@@ -42,6 +42,7 @@ class BookingService:
         start_time: datetime,
         end_time: datetime,
         fee: int | None = None,
+        extra_items: list | None = None
     ) -> Booking:
         logger.info("booking_creation_attempt", facility_id=facility_id, user_id=user_id, date=date_of_booking.isoformat())
         facility = await self.facility_repository.get_by_id(facility_id)
@@ -82,9 +83,21 @@ class BookingService:
             end_time=end_time,
         )
 
-        booking = await self.booking_repository.create(new_booking)
-        logger.info("booking_creation_successful", booking_id=booking.id, facility_id=facility_id, user_id=user_id)
         return booking
+        # Process extra items
+        if extra_items:
+            from app.models.booking import BookingItem
+            for item_data in extra_items:
+                # expecting a dict like {"itemId": 1, "quantity": 2}
+                item_id = item_data.get("itemId")
+                qty = item_data.get("quantity", 1)
+                if item_id:
+                    booking_item = BookingItem(item_id=int(item_id), quantity=int(qty))
+                    new_booking.extra_items.append(booking_item)
+
+        logger.info("booking_creation_successful", booking_id=booking.id, facility_id=facility_id, user_id=user_id)
+        return await self.booking_repository.create(new_booking)
+      
     
     async def get_facility_booking_queue(self, facility_id: int):
         facility = await self.facility_repository.get_by_id(facility_id)
