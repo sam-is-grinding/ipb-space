@@ -7,7 +7,8 @@ import {
   ClockCounterClockwise, 
   UserCircle, 
   SignOut, 
-  MagnifyingGlass 
+  MagnifyingGlass,
+  CalendarBlank
 } from '@phosphor-icons/react';
 import logoIPBSpace from '../../../assets/icons/logo.png';
 
@@ -64,6 +65,14 @@ export default function AdminLayout({ children }) {
           >
             <Door size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
             Manajemen Ruangan
+          </NavLink>
+
+          <NavLink 
+            to="/admin/facility/calendar" 
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white border-l-4 md:border-l-0 md:border-r-4 border-[#00BCD4]' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
+          >
+            <CalendarBlank size={20} weight={({ isActive }) => isActive ? "fill" : "regular"} /> 
+            Kalender Jadwal
           </NavLink>
 
           <NavLink 

@@ -18,6 +18,7 @@ import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
 import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
 import FacilityManagement from '../../features/facilities/pages/FacilityManagement';
 import AdminBookingHistory from '../../features/facilities/pages/AdminBookingHistory';
+import AdminCalendarSchedule from '../../features/facilities/pages/AdminCalendarSchedule';
 import BookingForm from '../../features/bookings/pages/BookingForm';
 import BookingHistory from '../../features/bookings/pages/BookingHistory';
 import BookingDetail from '../../features/bookings/pages/BookingDetail';
@@ -104,6 +105,7 @@ export default function AppRoutes() {
         <Route element={<AdminLayout><Outlet /></AdminLayout>}>
           <Route path="/admin/facility/dashboard" element={<FacilityManagement />} />
           <Route path="/admin/facility/history" element={<AdminBookingHistory />} />
+          <Route path="/admin/facility/calendar" element={<AdminCalendarSchedule />} />
           <Route path="/admin/facility/validations" element={<AdminValidationList />} />
           <Route path="/admin/facility/validations/:bookingId" element={<AdminValidationDetail />} />
         </Route>
