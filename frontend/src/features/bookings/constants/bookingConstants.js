@@ -36,3 +36,5 @@ export const BOOKING_MESSAGES = {
   ERROR_CANCEL_SYSTEM: 'Terjadi kesalahan saat membatalkan peminjaman.',
   ERROR_FETCH_HISTORY: 'Gagal memuat riwayat peminjaman.'
 };
+
+export const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in bytes
