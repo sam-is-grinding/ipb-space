@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime, timedelta
 from typing import Sequence
+import structlog
 
 from fastapi import HTTPException, UploadFile, status
 
@@ -12,6 +13,8 @@ from app.storage.document_storage import DocumentStorage
 from app.enums.status_approval import StatusApproval
 from app.services.mail_service import MailService
 from app.core.config import settings
+
+logger = structlog.get_logger()
 
 class BookingService:
     def __init__(
@@ -40,8 +43,10 @@ class BookingService:
         end_time: datetime,
         fee: int | None = None,
     ) -> Booking:
+        logger.info("booking_creation_attempt", facility_id=facility_id, user_id=user_id, date=date_of_booking.isoformat())
         facility = await self.facility_repository.get_by_id(facility_id)
         if not facility:
+            logger.warning("booking_creation_failed_facility_not_found", facility_id=facility_id)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Facility not found")
 
         user = await self.user_repository.get_by_id(user_id)
@@ -77,7 +82,9 @@ class BookingService:
             end_time=end_time,
         )
 
-        return await self.booking_repository.create(new_booking)
+        booking = await self.booking_repository.create(new_booking)
+        logger.info("booking_creation_successful", booking_id=booking.id, facility_id=facility_id, user_id=user_id)
+        return booking
     
     async def get_facility_booking_queue(self, facility_id: int):
         facility = await self.facility_repository.get_by_id(facility_id)
@@ -124,7 +131,9 @@ class BookingService:
         if not old_booking:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
+        logger.info("booking_status_update_attempt", booking_id=booking_id, old_status=old_booking.status, new_status=new_status)
         if new_status not in [s.value for s in StatusApproval]:
+            logger.warning("booking_status_update_failed_invalid_status", booking_id=booking_id, status=new_status)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid status. Valid statuses are: {', '.join([s.value for s in StatusApproval])}")
 
         # Trigger handover if an APPROVED booking is canceled
@@ -132,12 +141,14 @@ class BookingService:
 
         updated_booking = await self.booking_repository.update(old_booking.id, {"status": StatusApproval(new_status).value})
 
+        logger.info("booking_status_updated", booking_id=booking_id, new_status=new_status)
         if trigger_handover:
             await self.handle_handover_to_next_in_queue(old_booking)
 
         return updated_booking
 
     async def handle_handover_to_next_in_queue(self, canceled_booking: Booking):
+        logger.info("handover_triggered", canceled_booking_id=canceled_booking.id, facility_id=canceled_booking.facility_id)
         # Get all bookings for this facility to find overlaps
         all_facility_bookings = await self.booking_repository.get_bookings_by_facility_id(canceled_booking.facility_id)
 
@@ -151,12 +162,14 @@ class BookingService:
         ]
 
         if not overlapping_pending:
+            logger.info("handover_no_overlapping_pending", canceled_booking_id=canceled_booking.id)
             return
 
         # Sort by creation time (FIFO)
         overlapping_pending.sort(key=lambda x: x.created_at)
 
         next_booking = overlapping_pending[0]
+        logger.info("handover_target_found", booking_id=next_booking.id, user_id=next_booking.user_id)
 
         # Generate handover token and expiration
         token = secrets.token_urlsafe(32)
@@ -205,6 +218,7 @@ class BookingService:
         booking = result.unique().scalar_one_or_none()
 
         if not booking:
+            logger.warning("handover_acceptance_failed_invalid_token", token=token)
             raise HTTPException(status_code=400, detail="Invalid or expired handover token")
 
         # Accept the booking
@@ -214,4 +228,5 @@ class BookingService:
 
         await self.booking_repository.db.commit()
         await self.booking_repository.db.refresh(booking)
+        logger.info("handover_acceptance_successful", booking_id=booking.id, user_id=booking.user_id)
         return booking
