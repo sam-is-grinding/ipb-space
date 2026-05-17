@@ -15,6 +15,12 @@ import Login from '../../features/auth/pages/Login';
 import Register from '../../features/auth/pages/Register';
 import CivitasDashboard from '../../features/dashboard/pages/CivitasDashboard';
 import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
+import FacilityAdminOverview from '../../features/dashboard/pages/FacilityAdminOverview';
+import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
+import FacilityManagement from '../../features/facilities/pages/FacilityManagement';
+import AdminBookingHistory from '../../features/facilities/pages/AdminBookingHistory';
+import AdminCalendarSchedule from '../../features/facilities/pages/AdminCalendarSchedule';
+import AdminSystemLogs from '../../features/facilities/pages/AdminSystemLogs';
 import BookingForm from '../../features/bookings/pages/BookingForm';
 import BookingHistory from '../../features/bookings/pages/BookingHistory';
 import BookingDetail from '../../features/bookings/pages/BookingDetail';
@@ -56,8 +62,6 @@ const DynamicLayoutWrapper = () => {
 };
 
 // --- PLACEHOLDER COMPONENTS ---
-const FacilityStatus = () => <div className="p-10 text-center">Dashboard Admin Fasilitas</div>;
-const AdminValidationList = () => <div className="p-10 text-center">Daftar Validasi</div>;
 const AdminValidationDetail = () => <div className="p-10 text-center">Detail Validasi</div>;
 const AdminMasterData = () => <div className="p-10 text-center">Master Data</div>;
 const AdminManagement = () => <div className="p-10 text-center">Manajemen Pengguna</div>;
@@ -101,7 +105,11 @@ export default function AppRoutes() {
       {/* 4. FACILITY ADMIN ROUTES */}
       <Route element={<ProtectedRoute allowedRoles={['FacilityAdmin', 'SuperAdmin']} />}>
         <Route element={<AdminLayout><Outlet /></AdminLayout>}>
-          <Route path="/admin/facility/dashboard" element={<FacilityStatus />} />
+          <Route path="/admin/facility/overview" element={<FacilityAdminOverview />} />
+          <Route path="/admin/facility/dashboard" element={<FacilityManagement />} />
+          <Route path="/admin/facility/history" element={<AdminBookingHistory />} />
+          <Route path="/admin/facility/calendar" element={<AdminCalendarSchedule />} />
+          <Route path="/admin/facility/logs" element={<AdminSystemLogs />} />
           <Route path="/admin/facility/validations" element={<AdminValidationList />} />
           <Route path="/admin/facility/validations/:bookingId" element={<AdminValidationDetail />} />
         </Route>
