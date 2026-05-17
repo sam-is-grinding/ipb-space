@@ -7,7 +7,12 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" />
+        <Toaster 
+          position="top-right" 
+          containerStyle={{
+            top: '120px',
+          }}
+        />
         <AppRoutes />
       </Router>
     </AuthProvider>
