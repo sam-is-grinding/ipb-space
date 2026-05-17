@@ -16,6 +16,7 @@ import Register from '../../features/auth/pages/Register';
 import CivitasDashboard from '../../features/dashboard/pages/CivitasDashboard';
 import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
 import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
+import FacilityManagement from '../../features/facilities/pages/FacilityManagement';
 import BookingForm from '../../features/bookings/pages/BookingForm';
 import BookingHistory from '../../features/bookings/pages/BookingHistory';
 import BookingDetail from '../../features/bookings/pages/BookingDetail';
@@ -57,7 +58,6 @@ const DynamicLayoutWrapper = () => {
 };
 
 // --- PLACEHOLDER COMPONENTS ---
-const FacilityStatus = () => <div className="p-10 text-center">Dashboard Admin Fasilitas</div>;
 const AdminValidationDetail = () => <div className="p-10 text-center">Detail Validasi</div>;
 const AdminMasterData = () => <div className="p-10 text-center">Master Data</div>;
 const AdminManagement = () => <div className="p-10 text-center">Manajemen Pengguna</div>;
@@ -101,7 +101,7 @@ export default function AppRoutes() {
       {/* 4. FACILITY ADMIN ROUTES */}
       <Route element={<ProtectedRoute allowedRoles={['FacilityAdmin', 'SuperAdmin']} />}>
         <Route element={<AdminLayout><Outlet /></AdminLayout>}>
-          <Route path="/admin/facility/dashboard" element={<FacilityStatus />} />
+          <Route path="/admin/facility/dashboard" element={<FacilityManagement />} />
           <Route path="/admin/facility/validations" element={<AdminValidationList />} />
           <Route path="/admin/facility/validations/:bookingId" element={<AdminValidationDetail />} />
         </Route>

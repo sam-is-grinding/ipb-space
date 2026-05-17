@@ -1,0 +1,168 @@
+import React, { useState, useEffect } from 'react';
+import { Users, Desktop, Wind, Wrench, CheckCircle, Package } from '@phosphor-icons/react';
+import { facilityService } from '../services/facilityService';
+import { toast } from 'react-hot-toast';
+
+export default function FacilityManagement() {
+  const [facilities, setFacilities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('Semua Status');
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchFacilities = async () => {
+      try {
+        setIsLoading(true);
+        const res = await facilityService.getAllFacilities();
+        if (isMounted) {
+          const items = res.data?.items || res.items || [];
+          setFacilities(items);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error(err);
+          toast.error("Gagal memuat data ruangan.");
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    
+    fetchFacilities();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredFacilities = facilities.filter(f => {
+    if (filterStatus === 'Semua Status') return true;
+    const cond = f.condition || f.status || 'Good';
+    if (filterStatus === 'Tersedia') return cond === 'Good' || cond === 'Available';
+    if (filterStatus === 'Digunakan') return cond === 'In Use';
+    if (filterStatus === 'Maintenance') return cond === 'Maintenance';
+    return true;
+  });
+
+  const getAssetIcon = (assetName) => {
+    if (!assetName) return <Package size={16} />;
+    const name = assetName.toLowerCase();
+    if (name.includes('ac') || name.includes('pendingin')) return <Wind size={16} />;
+    if (name.includes('pc') || name.includes('komputer') || name.includes('desktop')) return <Desktop size={16} />;
+    return <Package size={16} />;
+  };
+
+  return (
+    <div className="flex-grow p-4 md:p-8 bg-slate-50 overflow-auto min-h-full">
+      {/* Header & Filter */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-primary mb-1">Manajemen Ruangan</h1>
+          <p className="text-slate-500 text-sm">Kelola status, kondisi, dan ketersediaan fasilitas IPB Space.</p>
+        </div>
+        <div className="min-w-[200px]">
+          <select 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl focus:ring-2 focus:ring-accent focus:border-accent block w-full p-3 shadow-sm outline-none cursor-pointer transition-all hover:bg-slate-50"
+          >
+            <option>Semua Status</option>
+            <option>Tersedia</option>
+            <option>Digunakan</option>
+            <option>Maintenance</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Bento Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+           {[...Array(8)].map((_, i) => (
+             <div key={i} className="bg-white rounded-2xl shadow-sm border border-slate-100 h-80 animate-pulse">
+               <div className="h-48 bg-slate-200 rounded-t-2xl"></div>
+               <div className="p-4 space-y-3">
+                 <div className="h-4 bg-slate-200 w-3/4 rounded"></div>
+                 <div className="h-3 bg-slate-100 w-1/2 rounded"></div>
+               </div>
+             </div>
+           ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredFacilities.map((f) => {
+            const cond = f.condition || f.status || 'Good';
+            const isMaintenance = cond === 'Maintenance';
+            const isGood = cond === 'Good' || cond === 'Available';
+            const isInUse = cond === 'In Use';
+
+            return (
+              <div key={f.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group">
+                {/* Image Container */}
+                <div className="h-48 relative overflow-hidden bg-slate-100 border-b border-slate-100">
+                  <img 
+                    src={f.image_url || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=600&h=400'} 
+                    alt={f.name}
+                    className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isMaintenance ? 'grayscale opacity-60' : ''}`}
+                  />
+                  
+                  {/* Dynamic Badges Overlay */}
+                  <div className="absolute top-3 left-3 flex flex-col gap-2">
+                    {isMaintenance && (
+                      <span className="bg-[#F1F5F9] text-[#475569] px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm border border-slate-200 backdrop-blur-md">
+                        <Wrench size={14} weight="bold" /> Maintenance
+                      </span>
+                    )}
+                    {!isMaintenance && isGood && (
+                      <span className="bg-[#D1FAE5] text-[#065F46] px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm border border-emerald-200 backdrop-blur-md">
+                        <CheckCircle size={14} weight="bold" /> Tersedia
+                      </span>
+                    )}
+                    {!isMaintenance && isInUse && (
+                      <span className="bg-[#CFFAFE] text-[#155E75] px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm border border-cyan-200 backdrop-blur-md">
+                        <Users size={14} weight="bold" /> Sedang Digunakan
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-5 flex-grow flex flex-col">
+                  <h3 className="font-black text-slate-800 text-lg mb-1 truncate">{f.name}</h3>
+                  <p className="text-slate-500 text-xs font-semibold mb-4 truncate">{f.location}</p>
+                  
+                  {/* Capacity & Assets Pills */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold border border-slate-200 shadow-sm">
+                      <Users size={16} className="text-primary" /> {f.capacity} Orang
+                    </span>
+                    
+                    {f.assets && f.assets.slice(0, 3).map((asset, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-xs font-semibold border border-slate-200 shadow-sm">
+                        <span className="text-primary">{getAssetIcon(asset.name)}</span> {asset.name}
+                      </span>
+                    ))}
+                    {f.assets && f.assets.length > 3 && (
+                      <span className="inline-flex items-center px-2 py-1 bg-slate-50 text-slate-500 rounded-lg text-xs font-bold border border-slate-200 shadow-sm">
+                        +{f.assets.length - 3}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-auto">
+                    <button 
+                      onClick={() => {}}
+                      className="w-full py-2.5 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-xl text-sm font-bold transition-all active:scale-95 shadow-sm"
+                    >
+                      Ubah Status & Kondisi
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
