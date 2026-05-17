@@ -3,7 +3,8 @@ import { toast } from 'react-hot-toast';
 import { FilePdf, CheckCircle, FileText, ClockCounterClockwise, Wrench } from '@phosphor-icons/react';
 import apiClient from '../../../shared/services/api/apiClient';
 import { bookingService } from '../../bookings/services/bookingService';
-import { useValidationLookup } from '../hooks/useValidationLookup';
+import { facilityService } from '../../facilities/services/facilityService';
+import { userService } from '../../users/services/userService';
 import ValidationActionModal from '../components/ValidationActionModal';
 import { formatDate, formatTime } from '../../../shared/utils/format';
 
@@ -17,28 +18,64 @@ const getInitials = (name) => {
 };
 
 export default function AdminValidationList() {
+  const [allBookings, setAllBookings] = useState([]);
   const [pendingBookings, setPendingBookings] = useState([]);
+  const [facilities, setFacilities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Binding IDs ke Nama aslinya
-  const { facilityMap, userMap, isLookupLoading } = useValidationLookup();
+  // Enhanced lookup: stores full user objects for role/work_unit access
+  const [facilityMap, setFacilityMap] = useState({});
+  const [userMap, setUserMap] = useState({});       // id -> fullname
+  const [userDetailMap, setUserDetailMap] = useState({}); // id -> { role, work_unit, fullname }
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchPendingBookings = async () => {
+    const fetchAllData = async () => {
       try {
         setIsLoading(true);
-        // Menggunakan service yang sudah ada
-        const response = await bookingService.getAllBookings();
-        const allBookings = response?.data?.items || response?.data || [];
-        
+        const [bookingsRes, facilitiesRes, usersRes] = await Promise.all([
+          bookingService.getAllBookings(),
+          facilityService.getAllFacilities(),
+          userService.getAllUsers()
+        ]);
+
         if (isMounted) {
+          const bookingsList = bookingsRes?.data?.items || bookingsRes?.data || [];
+          const facilitiesList = facilitiesRes?.data?.items || facilitiesRes?.data || [];
+          const usersList = usersRes?.data?.items || usersRes?.data || [];
+
+          // Build facility dictionary
+          const fMap = {};
+          if (Array.isArray(facilitiesList)) {
+            facilitiesList.forEach(f => { fMap[f.id] = f.name; });
+          }
+
+          // Build user dictionaries (name + full detail)
+          const uMap = {};
+          const uDetailMap = {};
+          if (Array.isArray(usersList)) {
+            usersList.forEach(u => {
+              uMap[u.id] = u.fullname || u.name;
+              uDetailMap[u.id] = {
+                fullname: u.fullname || u.name,
+                role: u.role || 'Civitas',
+                work_unit: u.work_unit || 'IPB Space'
+              };
+            });
+          }
+
+          setFacilityMap(fMap);
+          setUserMap(uMap);
+          setUserDetailMap(uDetailMap);
+          setAllBookings(bookingsList);
+          setFacilities(facilitiesList);
+
           // Filter ketat hanya data yang berstatus 'pending'
-          const pending = Array.isArray(allBookings) 
-            ? allBookings.filter(b => b.status?.toLowerCase() === 'pending') 
+          const pending = Array.isArray(bookingsList) 
+            ? bookingsList.filter(b => b.status?.toLowerCase() === 'pending') 
             : [];
           setPendingBookings(pending);
         }
@@ -54,12 +91,29 @@ export default function AdminValidationList() {
       }
     };
 
-    fetchPendingBookings();
+    fetchAllData();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // --- DYNAMIC STAT CARD COMPUTATIONS ---
+  const totalPermohonan = allBookings.length;
+  const menungguValidasi = pendingBookings.length;
+
+  // Disetujui hari ini: approved bookings where updated_at is today
+  const disetujuiHariIni = allBookings.filter(b => {
+    if (b.status?.toLowerCase() !== 'approved') return false;
+    const updated = new Date(b.updated_at || b.created_at);
+    const today = new Date();
+    return updated.toDateString() === today.toDateString();
+  }).length;
+
+  // Ruangan maintenance: facilities with condition indicating maintenance
+  const ruanganMaintenance = facilities.filter(f => 
+    f.condition && (f.condition.toLowerCase() === 'maintenance' || f.condition.toLowerCase() === 'under_maintenance')
+  ).length;
 
   const handleViewPDF = async (bookingId) => {
     try {
@@ -107,8 +161,6 @@ export default function AdminValidationList() {
     }
   };
 
-  const isPageLoading = isLoading || isLookupLoading;
-
   return (
     <div className="bg-[#F4F7FB] min-h-screen flex-1 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -118,7 +170,7 @@ export default function AdminValidationList() {
           <p className="text-on-surface-variant">Daftar pengajuan fasilitas yang menunggu persetujuan (Facility Admin).</p>
         </header>
 
-        {/* Statistic Cards Grid */}
+        {/* Dynamic Statistic Cards Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up" style={{ animationDelay: '0.05s' }}>
           <div className="bg-white p-5 rounded-card shadow-ambient border border-gray-100 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-primary shrink-0">
@@ -126,7 +178,7 @@ export default function AdminValidationList() {
             </div>
             <div>
               <p className="text-sm font-medium text-on-surface-variant line-clamp-1">Total Permohonan</p>
-              <h3 className="text-2xl font-black text-primary leading-none mt-1">156</h3>
+              <h3 className="text-2xl font-black text-primary leading-none mt-1">{isLoading ? '-' : totalPermohonan}</h3>
             </div>
           </div>
           
@@ -136,7 +188,7 @@ export default function AdminValidationList() {
             </div>
             <div>
               <p className="text-sm font-medium text-on-surface-variant line-clamp-1">Menunggu Validasi</p>
-              <h3 className="text-2xl font-black text-primary leading-none mt-1">{pendingBookings.length}</h3>
+              <h3 className="text-2xl font-black text-primary leading-none mt-1">{isLoading ? '-' : menungguValidasi}</h3>
             </div>
           </div>
 
@@ -146,7 +198,7 @@ export default function AdminValidationList() {
             </div>
             <div>
               <p className="text-sm font-medium text-on-surface-variant line-clamp-1">Disetujui Hari Ini</p>
-              <h3 className="text-2xl font-black text-primary leading-none mt-1">12</h3>
+              <h3 className="text-2xl font-black text-primary leading-none mt-1">{isLoading ? '-' : disetujuiHariIni}</h3>
             </div>
           </div>
 
@@ -156,7 +208,7 @@ export default function AdminValidationList() {
             </div>
             <div>
               <p className="text-sm font-medium text-on-surface-variant line-clamp-1">Ruangan Maintenance</p>
-              <h3 className="text-2xl font-black text-primary leading-none mt-1">2</h3>
+              <h3 className="text-2xl font-black text-primary leading-none mt-1">{isLoading ? '-' : ruanganMaintenance}</h3>
             </div>
           </div>
         </section>
@@ -175,7 +227,7 @@ export default function AdminValidationList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {isPageLoading ? (
+                {isLoading ? (
                   <tr>
                     <td colSpan="5" className="p-10 text-center text-slate-500 font-medium">Memuat antrean validasi...</td>
                   </tr>
@@ -195,6 +247,12 @@ export default function AdminValidationList() {
                     const initials = getInitials(userName);
                     const facilityName = facilityMap[booking.facility_id] || `Fasilitas ID: ${booking.facility_id}`;
 
+                    // Dynamic subtext from full user detail payload
+                    const userDetail = userDetailMap[booking.user_id];
+                    const userSubtext = userDetail 
+                      ? `${userDetail.role} - ${userDetail.work_unit}` 
+                      : 'Civitas - IPB Space';
+
                     return (
                       <tr key={booking.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="p-4 align-top">
@@ -204,7 +262,7 @@ export default function AdminValidationList() {
                             </div>
                             <div>
                               <p className="font-bold text-slate-800 text-sm">{userName}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">Civitas Akademika</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{userSubtext}</p>
                             </div>
                           </div>
                         </td>
