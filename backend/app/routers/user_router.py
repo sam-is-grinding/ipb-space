@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.services.user_service import UserService
 from app.repositories import user_repository
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UserUpdate
 from app.api.dependencies import ensure_is_admin, get_current_user
 from app.schemas.http import HTTPResponse
 
@@ -22,6 +22,23 @@ async def read_current_user(
     Endpoint to retrieve the current authenticated user's information.
     """
     return HTTPResponse(success=True, data={"user": current_user})
+
+@router.put("/me", response_model=HTTPResponse)
+async def update_current_user(
+    data: UserUpdate,
+    current_user: UserResponse = Depends(get_current_user),
+    service: UserService = Depends(get_user_service)
+) -> HTTPResponse:
+    """
+    Endpoint to update the current authenticated user's profile information.
+    """
+    updated_user = await service.update_user(
+        user_id=current_user.id,
+        fullname=data.fullname.strip(),
+        idnum=data.idnum.strip(),
+        email=data.email.strip()
+    )
+    return HTTPResponse(success=True, data={"user": updated_user})
 
 @router.get("/", response_model=HTTPResponse)
 async def read_all_users(

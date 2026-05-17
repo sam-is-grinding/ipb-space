@@ -11,6 +11,10 @@ from app.services.booking_service import BookingService
 from app.schemas.booking import BookingResponse
 from app.schemas.http import HTTPResponse
 from app.api.dependencies import ensure_is_admin, get_current_user
+from app.enums.user_enums import UserRoles
+from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
+from app.models.booking import Booking, BookingItem
 from app.schemas.user import UserResponse
 from app.storage.factory import get_document_storage
 from app.services.mail_service import mail_service
@@ -30,6 +34,24 @@ async def get_all_bookings(
     is_admin: bool = Depends(ensure_is_admin)
 ) -> HTTPResponse:
     bookings = await service.get_all_bookings()
+    return HTTPResponse(
+        success=True,
+        data={"items": [BookingResponse.model_validate(b).model_dump(mode="json") for b in bookings]},
+    )
+
+@router.get("/my", response_model=HTTPResponse)
+async def get_my_bookings(
+    service: BookingService = Depends(get_booking_service),
+    current_user: UserResponse = Depends(get_current_user)
+) -> HTTPResponse:
+    stmt = select(Booking).where(Booking.user_id == current_user.id).options(
+        joinedload(Booking.extra_items).joinedload(BookingItem.item),
+        joinedload(Booking.user),
+        joinedload(Booking.facility)
+    )
+    result = await service.booking_repository.db.execute(stmt)
+    bookings = result.unique().scalars().all()
+
     return HTTPResponse(
         success=True,
         data={"items": [BookingResponse.model_validate(b).model_dump(mode="json") for b in bookings]},

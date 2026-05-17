@@ -67,12 +67,15 @@ button:focus-visible {
   }
 } */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import '@fontsource/inter';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
+@layer base {
+  body {
+    @apply bg-[#F4F7FB] text-[#181c1f] antialiased;
+    font-family: 'Inter', sans-serif;
+  }
 }
