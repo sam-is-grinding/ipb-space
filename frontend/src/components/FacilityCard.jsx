@@ -1,6 +1,9 @@
 import { MapPin, Users, ChalkboardTeacher } from "@phosphor-icons/react";
+import { isFacilityAvailable } from "../shared/constants/facility";
 
 const FacilityCard = ({ facility }) => {
+  const isAvailable = isFacilityAvailable(facility);
+
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden">
       {/* Gambar Dummy */}
@@ -12,9 +15,9 @@ const FacilityCard = ({ facility }) => {
         />
         {/* Badge Status */}
         <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold ${
-          facility.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          isAvailable ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
         }`}>
-          {facility.is_active ? "Available" : "Maintenance"}
+          {isAvailable ? "Available" : "Maintenance"}
         </div>
       </div>
 
@@ -38,10 +41,10 @@ const FacilityCard = ({ facility }) => {
         {/* Tombol Booking */}
         <button 
           className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled={!facility.is_active}
+          disabled={!isAvailable}
         >
           <ChalkboardTeacher size={20} weight="fill" />
-          {facility.is_active ? "Book Now" : "Unavailable"}
+          {isAvailable ? "Book Now" : "Unavailable"}
         </button>
       </div>
     </div>
