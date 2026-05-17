@@ -24,7 +24,7 @@ export default function AdminSystemLogs() {
         if (isMounted) {
           const allBookings = res.data?.items || res.items || res.data || [];
           
-          // Process booking history into audit log format
+          // Process booking history into audit log format — 100% data-driven, zero mock entries
           const dynamicLogs = allBookings
             .filter(b => b.status && b.status.toLowerCase() !== 'pending')
             .map(b => {
@@ -50,43 +50,9 @@ export default function AdminSystemLogs() {
               };
             });
 
-          // Static Seed Injection
-          const staticLogs = [
-            {
-              id: 'SYS-8902',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-              operator: 'Siti Aminah',
-              action: 'Ubah Kapasitas Ruangan',
-              category: 'Perubahan Fasilitas',
-              entity: 'Auditorium FMIPA',
-              status: 'Berhasil',
-              icon: ArrowsClockwise
-            },
-            {
-              id: 'SYS-8901',
-              timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-              operator: 'System Auto',
-              action: 'Sinkronisasi Data SIAK',
-              category: 'Sistem Internal',
-              entity: 'Database Civitas',
-              status: 'Berhasil',
-              icon: ArrowsClockwise
-            },
-            {
-              id: 'SYS-8899',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-              operator: 'Ahmad Fauzi',
-              action: 'Force Logout Sesi Ganda',
-              category: 'Autentikasi & Sesi',
-              entity: 'Akun #1109',
-              status: 'Pending',
-              icon: ArrowsClockwise
-            }
-          ];
-
-          // Combine and Sort
-          const combined = [...staticLogs, ...dynamicLogs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          setLogs(combined);
+          // Sort descending by timestamp
+          dynamicLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          setLogs(dynamicLogs);
         }
       } catch (err) {
         if (isMounted) {
