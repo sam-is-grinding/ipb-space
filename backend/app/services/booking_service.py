@@ -39,6 +39,7 @@ class BookingService:
         start_time: datetime,
         end_time: datetime,
         fee: int | None = None,
+        extra_items: list | None = None
     ) -> Booking:
         facility = await self.facility_repository.get_by_id(facility_id)
         if not facility:
@@ -76,6 +77,17 @@ class BookingService:
             start_time=start_time,
             end_time=end_time,
         )
+
+        # Process extra items
+        if extra_items:
+            from app.models.booking import BookingItem
+            for item_data in extra_items:
+                # expecting a dict like {"itemId": 1, "quantity": 2}
+                item_id = item_data.get("itemId")
+                qty = item_data.get("quantity", 1)
+                if item_id:
+                    booking_item = BookingItem(item_id=int(item_id), quantity=int(qty))
+                    new_booking.extra_items.append(booking_item)
 
         return await self.booking_repository.create(new_booking)
     
