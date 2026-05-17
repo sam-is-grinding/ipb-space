@@ -1,19 +1,10 @@
 import React from 'react';
-import { BOOKING_STATUS } from '../../../shared/constants/status';
+import { BOOKING_FILTER_TABS } from '../constants/bookingConstants';
 
 export default function BookingFilterTabs({ activeFilter, onFilterChange }) {
-  const tabs = [
-    { id: 'all', label: 'Semua' },
-    { id: BOOKING_STATUS.PENDING, label: 'Menunggu Validasi' },
-    { id: BOOKING_STATUS.APPROVED, label: 'Disetujui' },
-    { id: BOOKING_STATUS.CHECKED_IN, label: 'Checked In' },
-    { id: BOOKING_STATUS.REJECTED, label: 'Ditolak' },
-    { id: BOOKING_STATUS.CANCELED, label: 'Dibatalkan' }
-  ];
-
   return (
     <div className="flex overflow-x-auto gap-2 pb-4 scrollbar-hide">
-      {tabs.map((tab) => {
+      {BOOKING_FILTER_TABS.map((tab) => {
         const isActive = activeFilter === tab.id;
         return (
           <button
