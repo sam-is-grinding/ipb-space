@@ -69,7 +69,7 @@ export default function CivitasDashboard() {
           </p>
         </div>
         <button
-          onClick={() => navigate('/eksplorasi')}
+          onClick={() => navigate('/facilities/explore')}
           className="bg-accent text-white px-8 py-3 rounded-btn font-semibold hover:brightness-110 transition-all shadow-md active:scale-95 whitespace-nowrap"
         >
           Ajukan Peminjaman
@@ -82,7 +82,7 @@ export default function CivitasDashboard() {
           <h2 className="text-lg font-bold text-primary">Status Peminjaman Terkini</h2>
           {bookings.length > 0 && (
             <button
-              onClick={() => navigate('/civitas/riwayat')}
+              onClick={() => navigate('/civitas/history')}
               className="text-sm font-semibold text-secondary hover:text-accent transition-colors underline-offset-4 hover:underline"
             >
               Lihat Semua

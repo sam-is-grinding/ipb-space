@@ -1,4 +1,12 @@
 import os
+import time
+import uuid
+import structlog
+from app.core.logging import setup_logging, logger
+
+# Setup logging as early as possible
+setup_logging()
+
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -6,12 +14,34 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
-from app.routers import facility_router, auth_router, user_router, booking_router, test_router, asset_router, item_router
+from app.routers import facility_router, auth_router, user_router, booking_router, test_router, asset_router, item_router, system_router
 
 # Import all models to ensure SQLAlchemy registry is populated
 import app.models
 
 app = FastAPI(title="IPB Space API")
+
+@app.middleware("http")
+async def logging_middleware(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=request_id)
+    
+    start_time = time.perf_counter()
+    
+    response = await call_next(request)
+    
+    process_time = time.perf_counter() - start_time
+    
+    logger.info(
+        "request_processed",
+        method=request.method,
+        path=request.url.path,
+        status_code=response.status_code,
+        duration=f"{process_time:.4f}s",
+    )
+    
+    return response
 
 uploads_dir = os.getenv("UPLOADS_PUBLIC_DIR", "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
@@ -32,6 +62,7 @@ app.include_router(booking_router.router)
 app.include_router(test_router.router)
 app.include_router(asset_router.router)
 app.include_router(item_router.router)
+app.include_router(system_router.router)
 
 @app.get("/")
 def home():
@@ -39,6 +70,7 @@ def home():
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.error("http_exception", status_code=exc.status_code, message=exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -58,6 +90,7 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
         exc.errors(),
         custom_encoder={Exception: lambda error: str(error)},
     )
+    logger.warning("validation_error", details=details)
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -77,6 +110,8 @@ async def sqlalchemy_integrity_exception_handler(request: Request, exc: Integrit
     detail = None
     if hasattr(exc, 'orig') and exc.orig and hasattr(exc.orig, 'args') and exc.orig.args:
         detail = str(exc.orig.args[0])
+    
+    logger.error("integrity_error", detail=detail)
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
@@ -93,6 +128,7 @@ async def sqlalchemy_integrity_exception_handler(request: Request, exc: Integrit
 
 @app.exception_handler(Exception)
 async def unexpected_exception_handler(request: Request, exc: Exception):
+    logger.exception("unexpected_error", error=str(exc))
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={

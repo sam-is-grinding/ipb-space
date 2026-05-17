@@ -3,6 +3,7 @@ import RoomCard from '../components/RoomCard';
 import Input from '../../../shared/components/ui/Input/Input';
 import { useFacilities } from '../hooks/useFacilities';
 import { MagnifyingGlass } from '@phosphor-icons/react';
+import { isFacilityAvailable } from '../../../shared/constants/facility';
 
 export default function FacilityCatalog() {
   const { facilities, loading, error } = useFacilities();
@@ -13,7 +14,8 @@ export default function FacilityCatalog() {
   const filteredFacilities = facilities.filter(f => {
     const matchesName = f.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCapacity = minCapacity ? f.capacity >= parseInt(minCapacity, 10) : true;
-    const matchesStatus = statusFilter === 'all' ? true : (statusFilter === 'available' ? f.is_active : !f.is_active);
+    const isAvailable = isFacilityAvailable(f);
+    const matchesStatus = statusFilter === 'all' ? true : (statusFilter === 'available' ? isAvailable : !isAvailable);
     return matchesName && matchesCapacity && matchesStatus;
   });
 
@@ -79,8 +81,9 @@ export default function FacilityCatalog() {
                     key={room.id}
                     id={room.id}
                     name={room.name}
+                    location={room.location}
                     capacity={room.capacity}
-                    status={room.is_active ? "Tersedia" : "Dalam Perbaikan"}
+                    status={isFacilityAvailable(room) ? "Tersedia" : "Dalam Perbaikan"}
                     imageUrl={room.image_url}
                   />
                 ))
