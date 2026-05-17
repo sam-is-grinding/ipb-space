@@ -13,7 +13,7 @@ const apiClient = axios.create({
 // Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -40,22 +40,25 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
-          const res = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, {
-             refresh_token: refreshToken
+          const res = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, null, {
+            params: {
+              refresh_token: refreshToken
+            }
           });
           
-          if (res.data && res.data.access_token) {
-             localStorage.setItem('token', res.data.access_token);
-             apiClient.defaults.headers.common['Authorization'] = `Bearer ${res.data.access_token}`;
-             return apiClient(originalRequest);
+          if (res.data?.success && res.data?.data?.token?.access_token) {
+            const newAccessToken = res.data.data.token.access_token;
+            localStorage.setItem('access_token', newAccessToken);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+            return apiClient(originalRequest);
           }
         }
       } catch (refreshError) {
-         // Refresh failed, proceed to logout
       }
       
       // If no refresh token or refresh failed, logout
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       window.location.href = '/login';

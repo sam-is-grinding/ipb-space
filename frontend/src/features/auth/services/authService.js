@@ -45,7 +45,7 @@ export const authService = {
    * Logout user by clearing local storage
    */
   logout: () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     window.location.href = '/login';
