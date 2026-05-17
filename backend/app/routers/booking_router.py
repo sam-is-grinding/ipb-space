@@ -90,12 +90,23 @@ async def create_booking(
     end_time: str = Form(..., pattern=r"^\d{2}:\d{2}$"), # HH:MM format
     fee: int | None = Form(None, ge=0),
     document: UploadFile = File(...),
+    extra_items: str | None = Form(None),
     current_user: UserResponse = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ) -> HTTPResponse:
     booking_date = datetime.strptime(date_of_booking, "%Y-%m-%d")
     start_dt = datetime.strptime(f"{date_of_booking} {start_time}", "%Y-%m-%d %H:%M")
     end_dt = datetime.strptime(f"{date_of_booking} {end_time}", "%Y-%m-%d %H:%M")
+
+    import json
+    extra_items_list = None
+    if extra_items:
+        try:
+            extra_items_list = json.loads(extra_items)
+            if not isinstance(extra_items_list, list):
+                raise HTTPException(status_code=400, detail="extra_items must be a JSON array")
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid extra_items format. Must be JSON array.")
 
     booking = await service.create_booking(
         facility_id=facility_id,
@@ -106,7 +117,8 @@ async def create_booking(
         fee=fee,
         date_of_booking=booking_date,
         start_time=start_dt,
-        end_time=end_dt
+        end_time=end_dt,
+        extra_items=extra_items_list
     )
 
     return HTTPResponse(
@@ -117,7 +129,7 @@ async def create_booking(
 @router.put("/{booking_id}/status", response_model=HTTPResponse)
 async def update_booking_status(
     booking_id: int,
-    new_status: str = Form(..., pattern="^(pending|approved|rejected|canceled)$"),
+    new_status: str = Form(..., pattern="^(pending|approved|rejected|canceled|checked-in)$"),
     service: BookingService = Depends(get_booking_service),
     is_admin: bool = Depends(ensure_is_admin)
 ) -> HTTPResponse:
@@ -139,6 +151,29 @@ async def cancel_booking(
     if not is_correct_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Kamu tidak memiliki izin untuk membatalkan booking ini")
     updated_booking = await service.update_booking_status(booking_id, "canceled")
+    return HTTPResponse(
+        success=True,
+        data={"booking": BookingResponse.model_validate(updated_booking).model_dump(mode="json")},
+    )
+
+@router.put("/{booking_id}/check-in", response_model=HTTPResponse)
+async def check_in_booking(
+    booking_id: int,
+    service: BookingService = Depends(get_booking_service),
+    current_user: UserResponse = Depends(get_current_user),
+) -> HTTPResponse:
+    booking = await service.get_booking_by_id(booking_id)
+    if booking.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Kamu tidak memiliki izin untuk check-in booking ini"
+        )
+    if booking.status != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Booking harus dalam status 'approved' untuk check-in"
+        )
+    updated_booking = await service.update_booking_status(booking_id, "checked-in")
     return HTTPResponse(
         success=True,
         data={"booking": BookingResponse.model_validate(updated_booking).model_dump(mode="json")},

@@ -15,8 +15,6 @@ export default function Register() {
             alt="Rektorat IPB"
             className="w-full h-full object-cover"
           />
-          {/* THE SEAMLESS GRADIENT: Pelan tapi pasti menuju murni biru */}
-          {/* Start from almost transparent, move through primary-container tones, solidifying at the right edge */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-container/40 via-primary-container/80 to-primary-container"></div>
 
           {/* Mobile-inspired color vibes (Secondary/Accent hints) */}
@@ -28,7 +26,6 @@ export default function Register() {
 
       {/* CONTENT LAYER */}
       <div className="relative z-10 flex flex-col md:flex-row w-full h-full min-h-screen">
-        {/* Mobile background (Gradient based on user request) */}
         <div className="absolute inset-0 bg-gradient-to-tr from-primary-container via-primary to-secondary md:hidden -z-10"></div>
 
         {/* Left Content (1/2 of screen) */}
@@ -65,7 +62,7 @@ export default function Register() {
               <div className="mb-8 text-center">
                 <h2 className="text-3xl font-bold text-primary-container tracking-tight">Daftar Akun</h2>
                 <div className="h-1 w-12 bg-secondary/20 mx-auto mt-2 rounded-full"></div>
-                <p className="text-on-surface-variant text-sm mt-3 font-medium">Bergabunglah dengan komunitas IPB Space</p>
+                <p className="text-on-surface-variant text-sm mt-3 font-medium">Bergabunglah dengan IPB Space</p>
               </div>
               <RegisterForm />
             </div>

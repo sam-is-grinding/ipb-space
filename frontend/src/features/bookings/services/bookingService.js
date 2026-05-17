@@ -50,9 +50,10 @@ export const bookingService = {
    * @returns {Promise<any>}
    */
   createBooking: async (facilityId, data) => {
-    const isFormData = data instanceof FormData;
     return await apiClient.post(`/bookings/${facilityId}`, data, {
-      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     });
   },
 
@@ -75,6 +76,15 @@ export const bookingService = {
    */
   cancelBooking: async (id) => {
     return await apiClient.put(`/bookings/${id}/cancel`);
+  },
+
+  /**
+   * Check in a booking
+   * @param {string|number} id 
+   * @returns {Promise<any>}
+   */
+  checkInBooking: async (id) => {
+    return await apiClient.put(`/bookings/${id}/check-in`);
   },
 
   /**

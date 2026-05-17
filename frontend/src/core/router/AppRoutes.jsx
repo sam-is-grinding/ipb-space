@@ -9,12 +9,17 @@ import AdminLayout from '../../shared/components/layout/AdminLayout';
 // Pages
 import PublicExplore from '../../features/facilities/pages/PublicExplore';
 import FacilityCatalog from '../../features/facilities/pages/FacilityCatalog';
+import FacilityDetail from '../../features/facilities/pages/FacilityDetail';
 import PublicCalendar from '../../features/calendar/pages/PublicCalendar';
 import Login from '../../features/auth/pages/Login';
 import Register from '../../features/auth/pages/Register';
 import CivitasDashboard from '../../features/dashboard/pages/CivitasDashboard';
 import CivitasProfile from '../../features/dashboard/pages/CivitasProfile';
 import AdminValidationList from '../../features/facilities/pages/AdminValidationList';
+import BookingForm from '../../features/bookings/pages/BookingForm';
+import BookingHistory from '../../features/bookings/pages/BookingHistory';
+import BookingDetail from '../../features/bookings/pages/BookingDetail';
+import DigitalTicket from '../../features/tickets/pages/DigitalTicket';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -52,8 +57,6 @@ const DynamicLayoutWrapper = () => {
 };
 
 // --- PLACEHOLDER COMPONENTS ---
-const BookingHistory = () => <div className="p-10 text-center">Riwayat Peminjaman (Segera Hadir)</div>;
-const BookingForm = () => <div className="p-10 text-center">Form Peminjaman (Segera Hadir)</div>;
 const FacilityStatus = () => <div className="p-10 text-center">Dashboard Admin Fasilitas</div>;
 const AdminValidationDetail = () => <div className="p-10 text-center">Detail Validasi</div>;
 const AdminMasterData = () => <div className="p-10 text-center">Master Data</div>;
@@ -77,6 +80,7 @@ export default function AppRoutes() {
       <Route element={<DynamicLayoutWrapper />}>
         <Route path="/" element={<PublicExplore />} />
         <Route path="/facilities/explore" element={<FacilityCatalog />} />
+        <Route path="/facilities/explore/:facilityId" element={<FacilityDetail />} />
         <Route path="/calendar" element={<PublicCalendar />} />
       </Route>
 
@@ -88,6 +92,8 @@ export default function AppRoutes() {
           <Route path="/civitas/history" element={<BookingHistory />} />
           <Route path="/civitas/riwayat" element={<Navigate to="/civitas/history" replace />} />
           <Route path="/civitas/booking/:facilityId" element={<BookingForm />} />
+          <Route path="/civitas/booking-detail/:bookingId" element={<BookingDetail />} />
+          <Route path="/civitas/ticket/:bookingId" element={<DigitalTicket />} />
           <Route path="/civitas/profile" element={<CivitasProfile />} />
         </Route>
       </Route>

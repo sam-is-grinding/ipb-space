@@ -4,6 +4,7 @@ import Input from '../../../shared/components/ui/Input/Input';
 import bgRektorat from '../../../assets/images/background.jpg';
 
 import { facilityService } from '../services/facilityService';
+import { isFacilityAvailable } from '../../../shared/constants/facility';
 
 export default function PublicExplore() {
   const [facilities, setFacilities] = React.useState([]);
@@ -79,8 +80,9 @@ export default function PublicExplore() {
                     key={room.id}
                     id={room.id}
                     name={room.name}
+                    location={room.location}
                     capacity={room.capacity}
-                    status={room.is_active ? "Tersedia" : "Dalam Perbaikan"}
+                    status={isFacilityAvailable(room) ? "Tersedia" : "Dalam Perbaikan"}
                     imageUrl={room.image_url}
                   />
                 ))
