@@ -124,20 +124,11 @@ export default function AdminValidationList() {
 
   const handleViewPDF = async (bookingId) => {
     try {
-      // Workaround Axios Blob untuk mem-bypass JWT Interceptor PDF secure viewing
-      const response = await apiClient.get(`/bookings/${bookingId}/document`, {
-        responseType: 'blob'
-      });
-      
-      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      window.open(blobUrl, '_blank');
-      
+      await bookingService.viewDocument(bookingId);
     } catch (error) {
-      console.error('Failed to fetch document PDF:', error);
       toast.error('Gagal membuka atau mengunduh dokumen pendukung.');
     }
   };
-
   const openValidationModal = (booking) => {
     setSelectedBooking(booking);
     setIsModalOpen(true);

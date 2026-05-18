@@ -106,19 +106,43 @@ export const bookingService = {
       responseType: 'blob' // Important for file downloads
     });
   },
+/**
+ * Delete a booking document
+ * @param {string|number} id
+ * @returns {Promise<any>}
+ */
+deleteBookingDocument: async (id) => {
+  return await apiClient.delete(`/bookings/${id}/document`);
+},
 
-  /**
-   * Delete a booking document
-   * @param {string|number} id 
-   * @returns {Promise<any>}
-   */
-  deleteBookingDocument: async (id) => {
-    return await apiClient.delete(`/bookings/${id}/document`);
-  },
+/**
+ * Open and view a booking document in a new tab
+ * Handles authentication and correct MIME types via Blob
+ * @param {string|number} id 
+ */
+viewDocument: async (id) => {
+  try {
+    const response = await apiClient.get(`/bookings/${id}/document`, {
+      responseType: 'blob'
+    });
 
-  /**
-   * Confirm handover of a booking
-   * @param {Object} params
+    // Create blob with correct MIME type from response
+    const blob = new Blob([response.data], { type: response.data.type });
+    const blobUrl = window.URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+
+    // Cleanup: in a real app you might want to revokeObjectURL after some time
+    // but for _blank tabs it needs to stay alive while loading.
+  } catch (error) {
+    console.error('Failed to fetch document:', error);
+    throw error;
+  }
+},
+
+/**
+ * Confirm handover of a booking
+ * @param {Object} params
+...
    * @param {string} params.code - Handover confirmation code
    * @returns {Promise<any>}
    */
