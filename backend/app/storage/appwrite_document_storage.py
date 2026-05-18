@@ -142,7 +142,8 @@ class AppwriteDocumentStorage(DocumentStorage):
                 bucket_id=self.booking_bucket_id,
                 file_id=file_id,
             )
-            filename = file_meta.get("name", f"document_{file_id}")
+            # Appwrite SDK returns an object, not a dict
+            filename = getattr(file_meta, "name", f"document_{file_id}")
             mime_type, _ = mimetypes.guess_type(filename)
             media_type = mime_type or "application/octet-stream"
 
