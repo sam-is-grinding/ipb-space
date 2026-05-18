@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
-from app.routers import facility_router, auth_router, user_router, booking_router, test_router, asset_router, item_router, system_router
+from app.routers import facility_router, auth_router, user_router, booking_router, asset_router, item_router, system_router
 
 # Import all models to ensure SQLAlchemy registry is populated
 import app.models
@@ -59,7 +59,6 @@ app.include_router(facility_router.router)
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
 app.include_router(booking_router.router)
-app.include_router(test_router.router)
 app.include_router(asset_router.router)
 app.include_router(item_router.router)
 app.include_router(system_router.router)

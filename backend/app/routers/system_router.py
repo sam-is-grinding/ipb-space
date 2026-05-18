@@ -8,7 +8,7 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 @router.get("/logs", response_model=HTTPResponse)
 async def get_logs(
-    is_admin: bool = Depends(ensure_is_admin)
+    _: bool = Depends(ensure_is_admin)
 ):
     """Retrieve the contents of the local application log file."""
     if not os.path.exists(LOG_FILE):
