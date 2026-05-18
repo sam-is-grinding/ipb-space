@@ -20,7 +20,7 @@ export default function MainLayout({ children }) {
     if (logout) {
       logout();
     }
-    navigate('/login');
+    navigate('/');
   };
 
   const isLoggedIn = !!user;
