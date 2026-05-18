@@ -37,9 +37,11 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
-    const isAuthError = error.response?.status === 401 || error.response?.status === 403;
-    if (isAuthError && !originalRequest._retry) {
+    // CRITICAL FIX: Only treat 401 (Unauthorized) as a token/auth error.
+    // 403 (Forbidden) means the user IS authenticated but lacks ROLE permissions —
+    // this must NOT trigger a logout or token refresh cycle.
+    const isTokenExpired = error.response?.status === 401;
+    if (isTokenExpired && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {

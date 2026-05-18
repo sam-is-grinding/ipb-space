@@ -18,38 +18,50 @@ export function useValidationLookup() {
     const fetchLookups = async () => {
       try {
         setIsLookupLoading(true);
-        // Ambil data secara bersamaan untuk mempercepat load time
-        const [facilitiesRes, usersRes] = await Promise.all([
+        
+        // Use allSettled so one failing endpoint doesn't crash the other
+        const [facilitiesResult, usersResult] = await Promise.allSettled([
           facilityService.getAllFacilities(),
           userService.getAllUsers()
         ]);
 
         if (isMounted) {
-          // Buat dictionary map untuk fasilitas
-          const fMap = {};
-          const facilities = facilitiesRes?.data?.items || facilitiesRes?.data || [];
-          if (Array.isArray(facilities)) {
-            facilities.forEach(f => {
-              fMap[f.id] = f.name;
-            });
+          // Process facilities — graceful degradation if failed
+          if (facilitiesResult.status === 'fulfilled') {
+            const fMap = {};
+            const facilities = facilitiesResult.value?.data?.items 
+              || facilitiesResult.value?.data 
+              || [];
+            if (Array.isArray(facilities)) {
+              facilities.forEach(f => { fMap[f.id] = f.name; });
+            }
+            setFacilityMap(fMap);
+          } else {
+            console.error('Failed to fetch facilities:', facilitiesResult.reason);
+            toast.error('Gagal memuat data fasilitas.');
           }
 
-          // Buat dictionary map untuk pengguna
-          const uMap = {};
-          const users = usersRes?.data?.items || usersRes?.data || [];
-          if (Array.isArray(users)) {
-            users.forEach(u => {
-              uMap[u.id] = u.fullname || u.name; 
-            });
+          // Process users — graceful degradation if failed
+          if (usersResult.status === 'fulfilled') {
+            const uMap = {};
+            const users = usersResult.value?.data?.items 
+              || usersResult.value?.data 
+              || [];
+            if (Array.isArray(users)) {
+              users.forEach(u => {
+                uMap[u.id] = u.fullname || u.name;
+              });
+            }
+            setUserMap(uMap);
+          } else {
+            console.error('Failed to fetch users:', usersResult.reason);
+            // Non-fatal: user names will show as ID fallbacks
           }
-
-          setFacilityMap(fMap);
-          setUserMap(uMap);
         }
       } catch (error) {
         if (isMounted) {
           console.error('Failed to fetch lookup data:', error);
-          toast.error('Gagal memuat data referensi pemohon dan fasilitas.');
+          toast.error('Gagal memuat data referensi.');
         }
       } finally {
         if (isMounted) {

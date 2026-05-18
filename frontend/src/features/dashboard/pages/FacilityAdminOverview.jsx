@@ -19,21 +19,35 @@ export default function FacilityAdminOverview() {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        const [bookingsRes, facilitiesRes, usersRes] = await Promise.all([
+        // allSettled: one failing endpoint (e.g. /users/ 403) won't wipe bookings & facilities
+        const [bookingsResult, facilitiesResult, usersResult] = await Promise.allSettled([
           bookingService.getAllBookings(),
           facilityService.getAllFacilities(),
           userService.getAllUsers()
         ]);
 
         if (isMounted) {
-          const bList = bookingsRes?.data?.items || bookingsRes?.items || bookingsRes?.data || [];
-          const fList = facilitiesRes?.data?.items || facilitiesRes?.items || facilitiesRes?.data || [];
-          const uList = usersRes?.data?.items || usersRes?.items || usersRes?.data || [];
+          const safeExtract = (result, ...paths) => {
+            if (result.status !== 'fulfilled') return [];
+            const v = result.value;
+            for (const path of paths) {
+              const val = path.split('.').reduce((o, k) => o?.[k], v);
+              if (Array.isArray(val) && val.length >= 0) return val;
+            }
+            return [];
+          };
+
+          const bList = safeExtract(bookingsResult, 'data.items', 'items', 'data');
+          const fList = safeExtract(facilitiesResult, 'data.items', 'items', 'data');
+          const uList = safeExtract(usersResult, 'data.items', 'items', 'data');
 
           setBookings(bList);
           setFacilities(fList);
           setFacilityAdminCount(
-            uList.filter(u => u.role && (u.role.toLowerCase() === 'facility_manager' || u.role.toLowerCase() === 'facilityadmin')).length
+            uList.filter(u => u.role && (
+              u.role.toLowerCase() === 'facility_manager' || 
+              u.role.toLowerCase() === 'facilityadmin'
+            )).length
           );
         }
       } catch (error) {
