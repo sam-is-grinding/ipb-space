@@ -81,3 +81,15 @@ def ensure_is_facility_manager(current_user: UserResponse = Depends(get_current_
     if current_user.role != UserRoles.FACILITY_MANAGER:
         logger.warning("facility_manager_access_denied", user_id=current_user.id)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+    
+def ensure_is_admin_or_facility_manager(current_user: UserResponse = Depends(get_current_user)):
+    """
+    Dependency function to ensure the current authenticated user has either admin or facility manager privileges.
+    
+    :param current_user: The current active user retrieved from the get_current_user dependency
+    :type current_user: UserResponse
+    :raises HTTPException: If the user does not have admin or facility manager privileges
+    """
+    if current_user.role not in [UserRoles.ADMIN, UserRoles.FACILITY_MANAGER]:
+        logger.warning("admin_or_facility_manager_access_denied", user_id=current_user.id)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
