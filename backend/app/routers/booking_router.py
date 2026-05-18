@@ -10,7 +10,7 @@ from app.repositories.user_repository import UserRepository
 from app.services.booking_service import BookingService
 from app.schemas.booking import BookingResponse
 from app.schemas.http import HTTPResponse
-from app.api.dependencies import ensure_is_admin, get_current_user, ensure_is_facility_manager
+from app.api.dependencies import ensure_is_admin, get_current_user, ensure_is_facility_manager, ensure_is_admin_or_facility_manager
 from app.enums.user_enums import UserRoles
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
@@ -131,7 +131,7 @@ async def update_booking_status(
     booking_id: int,
     new_status: str = Form(..., pattern="^(pending|approved|rejected|canceled|checked-in)$"),
     service: BookingService = Depends(get_booking_service),
-    is_facility_manager: bool = Depends(ensure_is_facility_manager)
+    _: bool = Depends(ensure_is_admin_or_facility_manager)
 ) -> HTTPResponse:
     updated_booking = await service.update_booking_status(booking_id, new_status)
     return HTTPResponse(
@@ -183,7 +183,7 @@ async def check_in_booking(
 async def delete_booking(
     booking_id: int,
     service: BookingService = Depends(get_booking_service),
-    _: bool = Depends(ensure_is_admin) | Depends(ensure_is_facility_manager)
+    _: bool = Depends(ensure_is_admin)
 ) -> HTTPResponse:
     await service.delete_booking(booking_id)
     return HTTPResponse(success=True, data={"message": "Booking deleted successfully"})
