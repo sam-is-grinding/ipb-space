@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError
 from app.routers import facility_router, auth_router, user_router, booking_router, asset_router, item_router, system_router
+from app.core.config import settings
 
 # Import all models to ensure SQLAlchemy registry is populated
 import app.models
@@ -47,9 +48,33 @@ uploads_dir = os.getenv("UPLOADS_PUBLIC_DIR", "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
+# Define CORS origins
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http://localhost:5174",
+    "http://127.0.0.1",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:5174",
+    "https://ipbspace.vercel.app",
+    "https://ipbspace.my.id",
+]
+
+if settings.CORS_ORIGINS:
+    extra_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
+    origins.extend(extra_origins)
+
+# Normalize origins (remove trailing slash) and remove duplicates
+origins = list(set(origin.rstrip("/") for origin in origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
