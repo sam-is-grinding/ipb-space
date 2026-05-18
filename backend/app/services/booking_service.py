@@ -83,7 +83,6 @@ class BookingService:
             end_time=end_time,
         )
 
-        return booking
         # Process extra items
         if extra_items:
             from app.models.booking import BookingItem
@@ -95,8 +94,14 @@ class BookingService:
                     booking_item = BookingItem(item_id=int(item_id), quantity=int(qty))
                     new_booking.extra_items.append(booking_item)
 
-        logger.info("booking_creation_successful", booking_id=booking.id, facility_id=facility_id, user_id=user_id)
-        return await self.booking_repository.create(new_booking)
+        created_booking = await self.booking_repository.create(new_booking)
+
+        if not created_booking:
+            logger.error("booking_creation_failed_db_error", facility_id=facility_id, user_id=user_id)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create booking")
+
+        logger.info("booking_creation_successful", booking_id=created_booking.id, facility_id=facility_id, user_id=user_id)
+        return created_booking
       
     
     async def get_facility_booking_queue(self, facility_id: int):
