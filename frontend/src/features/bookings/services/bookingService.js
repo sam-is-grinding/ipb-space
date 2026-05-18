@@ -59,14 +59,26 @@ export const bookingService = {
 
   /**
    * Update booking status (e.g., Approve, Reject)
-   * @param {string|number} id 
-   * @param {Object} data 
-   * @param {string} data.status - The new status
-   * @param {string} [data.reason] - Reason for status change (if rejected)
+   * FastAPI endpoint requires Form(...) — always send as multipart/form-data.
+   * Accepts either a FormData object or a plain {new_status} object.
+   * @param {string|number} id
+   * @param {FormData|{new_status: string}} data
    * @returns {Promise<any>}
    */
   updateBookingStatus: async (id, data) => {
-    return await apiClient.put(`/bookings/${id}/status`, data);
+    // Normalize: if caller already passes FormData, use it directly.
+    // Otherwise, build FormData from a plain object so FastAPI Form(...) parses correctly.
+    let formPayload;
+    if (data instanceof FormData) {
+      formPayload = data;
+    } else {
+      formPayload = new FormData();
+      const status = data?.new_status || data?.status || data;
+      formPayload.append('new_status', status);
+    }
+    return await apiClient.put(`/bookings/${id}/status`, formPayload, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
 
   /**
@@ -154,6 +166,11 @@ viewDocument: async (id) => {
       try {
         const text = await axiosError.data.text();
         const parsed = JSON.parse(text);
+        // DEBUG: Expose exact Appwrite/FastAPI error detail to console for demo diagnosis
+        console.error(
+          `[viewDocument] HTTP ${axiosError.status} from /bookings/${error?.config?.url}:`,
+          parsed
+        );
         const msg = parsed?.detail || 'Dokumen tidak tersedia atau gagal dimuat dari cloud storage.';
         throw new Error(msg);
       } catch (parseErr) {
