@@ -39,7 +39,9 @@ export default function FacilityManagement() {
         setIsLoading(true);
         const res = await facilityService.getAllFacilities();
         if (isMounted) {
-          const items = res.data?.items || res.items || [];
+          // apiClient unwraps response.data → res = { success, data: { items: [] } }
+          const raw = res?.data?.items ?? res?.data ?? res?.items ?? res ?? [];
+          const items = Array.isArray(raw) ? raw : [];
           setFacilities(items);
         }
       } catch (err) {

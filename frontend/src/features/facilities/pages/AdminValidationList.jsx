@@ -36,36 +36,44 @@ export default function AdminValidationList() {
     const fetchAllData = async () => {
       try {
         setIsLoading(true);
-        const [bookingsRes, facilitiesRes, usersRes] = await Promise.all([
+        // allSettled: if /users/ returns 403 before backend restart,
+        // bookings and facilities still load cleanly
+        const [bookingsResult, facilitiesResult, usersResult] = await Promise.allSettled([
           bookingService.getAllBookings(),
           facilityService.getAllFacilities(),
           userService.getAllUsers()
         ]);
 
         if (isMounted) {
-          const bookingsList = bookingsRes?.data?.items || bookingsRes?.data || [];
-          const facilitiesList = facilitiesRes?.data?.items || facilitiesRes?.data || [];
-          const usersList = usersRes?.data?.items || usersRes?.data || [];
+          const safeExtract = (result, ...paths) => {
+            if (result.status !== 'fulfilled') return [];
+            const v = result.value;
+            for (const path of paths) {
+              const val = path.split('.').reduce((o, k) => o?.[k], v);
+              if (Array.isArray(val)) return val;
+            }
+            return [];
+          };
+
+          const bookingsList = safeExtract(bookingsResult, 'data.items', 'data', 'items');
+          const facilitiesList = safeExtract(facilitiesResult, 'data.items', 'data', 'items');
+          const usersList = safeExtract(usersResult, 'data.items', 'data', 'items');
 
           // Build facility dictionary
           const fMap = {};
-          if (Array.isArray(facilitiesList)) {
-            facilitiesList.forEach(f => { fMap[f.id] = f.name; });
-          }
+          facilitiesList.forEach(f => { fMap[f.id] = f.name; });
 
           // Build user dictionaries (name + full detail)
           const uMap = {};
           const uDetailMap = {};
-          if (Array.isArray(usersList)) {
-            usersList.forEach(u => {
-              uMap[u.id] = u.fullname || u.name;
-              uDetailMap[u.id] = {
-                fullname: u.fullname || u.name,
-                role: u.role || 'Civitas',
-                work_unit: u.work_unit || 'IPB Space'
-              };
-            });
-          }
+          usersList.forEach(u => {
+            uMap[u.id] = u.fullname || u.name;
+            uDetailMap[u.id] = {
+              fullname: u.fullname || u.name,
+              role: u.role || 'Civitas',
+              work_unit: u.work_unit || 'IPB Space'
+            };
+          });
 
           setFacilityMap(fMap);
           setUserMap(uMap);
@@ -74,9 +82,7 @@ export default function AdminValidationList() {
           setFacilities(facilitiesList);
 
           // Filter ketat hanya data yang berstatus 'pending'
-          const pending = Array.isArray(bookingsList) 
-            ? bookingsList.filter(b => b.status?.toLowerCase() === 'pending') 
-            : [];
+          const pending = bookingsList.filter(b => b.status?.toLowerCase() === 'pending');
           setPendingBookings(pending);
         }
       } catch (error) {
@@ -88,6 +94,7 @@ export default function AdminValidationList() {
         if (isMounted) {
           setIsLoading(false);
         }
+
       }
     };
 
