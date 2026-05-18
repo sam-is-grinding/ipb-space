@@ -1,5 +1,6 @@
 import asyncio
 import io
+import mimetypes
 import os
 import re
 from uuid import uuid4
@@ -135,6 +136,16 @@ class AppwriteDocumentStorage(DocumentStorage):
 
         file_id = match.group(1)
         try:
+            # Fetch file metadata to get the original filename
+            file_meta = await asyncio.to_thread(
+                self.storage.get_file,
+                bucket_id=self.booking_bucket_id,
+                file_id=file_id,
+            )
+            filename = file_meta.get("name", f"document_{file_id}")
+            mime_type, _ = mimetypes.guess_type(filename)
+            media_type = mime_type or "application/octet-stream"
+
             file_bytes = await asyncio.to_thread(
                 self.storage.get_file_download,
                 bucket_id=self.booking_bucket_id,
@@ -142,8 +153,8 @@ class AppwriteDocumentStorage(DocumentStorage):
             )
             return StreamingResponse(
                 io.BytesIO(file_bytes),
-                media_type="application/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename=document_{file_id}"},
+                media_type=media_type,
+                headers={"Content-Disposition": f"inline; filename={filename}"},
             )
         except Exception as exc:
             raise HTTPException(

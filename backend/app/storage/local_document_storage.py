@@ -1,4 +1,5 @@
 import io
+import mimetypes
 import os
 from pathlib import Path
 from uuid import uuid4
@@ -62,9 +63,12 @@ class LocalDocumentStorage(DocumentStorage):
         file_path = self.booking_dir / filename
         if file_path.exists():
             file_bytes = file_path.read_bytes()
+            mime_type, _ = mimetypes.guess_type(filename)
+            media_type = mime_type or "application/octet-stream"
+
             return StreamingResponse(
                 io.BytesIO(file_bytes),
-                media_type="application/octet-stream",
-                headers={"Content-Disposition": f"attachment; filename={filename}"},
+                media_type=media_type,
+                headers={"Content-Disposition": f"inline; filename={filename}"},
             )
         raise FileNotFoundError(f"Booking document not found: {file_url}")
