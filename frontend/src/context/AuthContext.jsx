@@ -25,14 +25,32 @@ export const AuthProvider = ({ children }) => {
           setUser(response.data.user);
           setIsAuthenticated(true);
         } else {
-          throw new Error('Invalid session');
+          const cachedUser = localStorage.getItem('user');
+          if (cachedUser) {
+            setUser(JSON.parse(cachedUser));
+            setIsAuthenticated(true);
+          } else {
+            throw new Error('Invalid session');
+          }
         }
       } catch (error) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        setUser(null);
-        setIsAuthenticated(false);
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          setUser(null);
+          setIsAuthenticated(false);
+        } else {
+          const cachedUser = localStorage.getItem('user');
+          if (cachedUser) {
+            try {
+              setUser(JSON.parse(cachedUser));
+              setIsAuthenticated(true);
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -68,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   const updateProfile = async (fullname, idnum, email) => {
