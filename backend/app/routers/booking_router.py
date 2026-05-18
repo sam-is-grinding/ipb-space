@@ -199,7 +199,7 @@ async def get_booking_document(
     if not booking.document_url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found for this booking")
     
-    return storage.read_booking_document(booking.document_url)
+    return await storage.read_booking_document(booking.document_url)
 
 @router.delete("/{booking_id}/document", response_model=HTTPResponse)
 async def delete_booking_document(
