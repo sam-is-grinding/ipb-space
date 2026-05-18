@@ -10,7 +10,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -44,7 +44,7 @@ export default function LoginForm() {
       setLoading(true);
       const user = await login(email, password);
       toast.success('Selamat datang!');
-      
+
       if (user.role === 'civitas') {
         navigate('/civitas/dashboard');
       } else if (user.role === 'facility_manager') {
@@ -80,9 +80,8 @@ export default function LoginForm() {
               if (errors.email) setErrors({ ...errors, email: '' });
             }}
             placeholder="nama@email.com"
-            className={`w-full pl-10 pr-4 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${
-              errors.email ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
-            }`}
+            className={`w-full pl-10 pr-4 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${errors.email ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
+              }`}
           />
         </div>
         {errors.email && <p className="mt-1 text-xs text-danger font-medium">{errors.email}</p>}
@@ -105,9 +104,8 @@ export default function LoginForm() {
               if (errors.password) setErrors({ ...errors, password: '' });
             }}
             placeholder="Masukkan kata sandi"
-            className={`w-full pl-10 pr-10 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${
-              errors.password ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
-            }`}
+            className={`w-full pl-10 pr-10 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${errors.password ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
+              }`}
           />
           <button
             type="button"
