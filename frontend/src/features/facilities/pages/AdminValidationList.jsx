@@ -81,8 +81,10 @@ export default function AdminValidationList() {
           setAllBookings(bookingsList);
           setFacilities(facilitiesList);
 
-          // Filter ketat hanya data yang berstatus 'pending'
-          const pending = bookingsList.filter(b => b.status?.toLowerCase() === 'pending');
+          // Filter ketat hanya data yang berstatus 'pending' dan urutkan dari yang tertua
+          const pending = bookingsList
+            .filter(b => b.status?.toLowerCase() === 'pending')
+            .sort((a, b) => new Date(a.created_at || a.date_of_booking) - new Date(b.created_at || b.date_of_booking));
           setPendingBookings(pending);
         }
       } catch (error) {
@@ -221,6 +223,7 @@ export default function AdminValidationList() {
                 <tr className="bg-slate-50/50 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-gray-100">
                   <th className="p-4 font-medium text-left">Peminjam</th>
                   <th className="p-4 font-medium text-left">Ruangan & Agenda</th>
+                  <th className="p-4 font-medium text-left">Dibuat Pada</th>
                   <th className="p-4 font-medium text-left">Waktu Pelaksanaan</th>
                   <th className="p-4 font-medium text-left">Status</th>
                   <th className="p-4 font-medium text-center">Aksi</th>
@@ -229,11 +232,11 @@ export default function AdminValidationList() {
               <tbody className="divide-y divide-gray-100">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="5" className="p-10 text-center text-slate-500 font-medium">Memuat antrean validasi...</td>
+                    <td colSpan="6" className="p-10 text-center text-slate-500 font-medium">Memuat antrean validasi...</td>
                   </tr>
                 ) : pendingBookings.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="p-12 text-center">
+                    <td colSpan="6" className="p-12 text-center">
                       <div className="flex flex-col items-center justify-center text-slate-400">
                         <CheckCircle size={56} className="text-slate-300 mb-4" weight="light" />
                         <p className="font-bold text-lg text-slate-700">Tidak Ada Antrean Validasi</p>
@@ -253,6 +256,9 @@ export default function AdminValidationList() {
                       ? `${userDetail.role} - ${userDetail.work_unit}` 
                       : 'Civitas - IPB Space';
 
+                    const createdTs = booking.created_at || booking.date_of_booking;
+                    const formattedCreatedAt = createdTs ? new Date(createdTs).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
                     return (
                       <tr key={booking.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="p-4 align-top">
@@ -271,6 +277,9 @@ export default function AdminValidationList() {
                             <p className="font-bold text-primary text-sm">{facilityName}</p>
                             <p className="font-medium text-slate-600 text-sm mt-1 line-clamp-2">{booking.purpose}</p>
                           </div>
+                        </td>
+                        <td className="p-4 align-top text-sm font-semibold text-slate-600">
+                          {formattedCreatedAt}
                         </td>
                         <td className="p-4 align-top text-sm text-slate-600">
                           <div className="flex flex-col gap-1">
