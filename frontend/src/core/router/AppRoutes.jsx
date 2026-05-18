@@ -26,6 +26,7 @@ import BookingHistory from '../../features/bookings/pages/BookingHistory';
 import BookingDetail from '../../features/bookings/pages/BookingDetail';
 import DigitalTicket from '../../features/tickets/pages/DigitalTicket';
 
+import NotFound from '../../shared/components/common/NotFound';
 import ProtectedRoute from './ProtectedRoute';
 
 /**
@@ -34,7 +35,7 @@ import ProtectedRoute from './ProtectedRoute';
  */
 const DynamicLayoutWrapper = () => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
@@ -74,12 +75,6 @@ const AdminValidationDetail = () => <div className="p-10 text-center">Detail Val
 const AdminMasterData = () => <div className="p-10 text-center">Master Data</div>;
 const AdminManagement = () => <div className="p-10 text-center">Manajemen Pengguna</div>;
 const SystemAuditLog = () => <div className="p-10 text-center">Audit Log Sistem</div>;
-const NotFound = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-surface">
-    <h1 className="text-6xl font-black text-primary drop-shadow-md mb-2">404</h1>
-    <p className="text-gray-500 font-medium">Halaman tidak ditemukan.</p>
-  </div>
-);
 
 export default function AppRoutes() {
   return (
@@ -120,6 +115,7 @@ export default function AppRoutes() {
           <Route path="/admin/facility/logs" element={<AdminSystemLogs />} />
           <Route path="/admin/facility/validations" element={<AdminValidationList />} />
           <Route path="/admin/facility/validations/:bookingId" element={<AdminValidationDetail />} />
+          <Route path="/admin/facility/profile" element={<div className="p-10 text-center">Profil Admin</div>} />
         </Route>
       </Route>
 
