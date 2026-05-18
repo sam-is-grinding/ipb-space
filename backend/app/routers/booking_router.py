@@ -31,7 +31,7 @@ async def get_booking_service(db: AsyncSession = Depends(get_db)):
 @router.get("/", response_model=HTTPResponse)
 async def get_all_bookings(
     service: BookingService = Depends(get_booking_service),
-    is_facility_manager: bool = Depends(ensure_is_facility_manager)
+    is_authorized: bool = Depends(ensure_is_admin_or_facility_manager)
 ) -> HTTPResponse:
     bookings = await service.get_all_bookings()
     return HTTPResponse(
