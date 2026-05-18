@@ -10,7 +10,7 @@ export default function BookingDetailSidebar({ booking, status, onCancel }) {
     try {
       await bookingService.viewDocument(booking.id);
     } catch (error) {
-      toast.error('Gagal membuka dokumen pendukung.');
+      toast.error(error?.message || 'Dokumen tidak tersedia atau gagal dimuat dari cloud storage.');
     }
   };
 

@@ -126,7 +126,7 @@ export default function AdminValidationList() {
     try {
       await bookingService.viewDocument(bookingId);
     } catch (error) {
-      toast.error('Gagal membuka atau mengunduh dokumen pendukung.');
+      toast.error(error?.message || 'Dokumen tidak tersedia atau gagal dimuat dari cloud storage.');
     }
   };
   const openValidationModal = (booking) => {

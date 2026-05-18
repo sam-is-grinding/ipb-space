@@ -116,27 +116,66 @@ deleteBookingDocument: async (id) => {
 },
 
 /**
- * Open and view a booking document in a new tab
- * Handles authentication and correct MIME types via Blob
- * @param {string|number} id 
+ * Open and view a booking document in a new tab.
+ * Handles authentication and correct MIME types via Blob.
+ * HOTFIX: Includes robust Blob error parsing for 400/404/500 from Appwrite.
+ * @param {string|number} id
  */
 viewDocument: async (id) => {
   try {
-    // apiClient response interceptor returns response.data directly
-    // When responseType is 'blob', response.data IS the blob object
+    // When responseType:'blob', apiClient interceptor returns response.data (the Blob directly)
     const blob = await apiClient.get(`/bookings/${id}/document`, {
       responseType: 'blob'
     });
 
-    if (!(blob instanceof Blob)) {
-      console.error('Expected blob but got:', typeof blob);
-      throw new Error('Server did not return a valid file');
+    // Guard: confirm we actually received a Blob before creating an object URL
+    if (!blob || !(blob instanceof Blob)) {
+      throw new Error('Server tidak mengembalikan file yang valid.');
+    }
+
+    // Guard: if Blob is JSON (error payload disguised as blob), parse and throw it
+    if (blob.type && blob.type.includes('application/json')) {
+      const text = await blob.text();
+      let detail = 'Dokumen tidak dapat dimuat.';
+      try { detail = JSON.parse(text)?.detail || detail; } catch (_) {}
+      throw new Error(detail);
     }
 
     const blobUrl = window.URL.createObjectURL(blob);
     window.open(blobUrl, '_blank');
+
+    // Revoke after a delay to free memory once the tab has loaded
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+
   } catch (error) {
-    console.error('Failed to fetch document:', error);
+    // Re-parse Axios blob error response (400/404/500) into readable message
+    const axiosError = error?.response;
+    if (axiosError?.data instanceof Blob) {
+      try {
+        const text = await axiosError.data.text();
+        const parsed = JSON.parse(text);
+        const msg = parsed?.detail || 'Dokumen tidak tersedia atau gagal dimuat dari cloud storage.';
+        throw new Error(msg);
+      } catch (parseErr) {
+        if (parseErr.message && !parseErr.message.includes('JSON')) {
+          throw parseErr; // rethrow the meaningful error
+        }
+      }
+    }
+
+    // Specific status-code user messages
+    const status = axiosError?.status;
+    if (status === 400) {
+      throw new Error('Dokumen tidak tersedia atau gagal dimuat dari cloud storage.');
+    }
+    if (status === 404) {
+      throw new Error('Dokumen tidak ditemukan. Mungkin belum diunggah oleh pemohon.');
+    }
+    if (status === 403) {
+      throw new Error('Anda tidak memiliki izin untuk mengakses dokumen ini.');
+    }
+
+    // Fallback: rethrow original
     throw error;
   }
 },
