@@ -122,23 +122,24 @@ deleteBookingDocument: async (id) => {
  */
 viewDocument: async (id) => {
   try {
-    const response = await apiClient.get(`/bookings/${id}/document`, {
+    // apiClient response interceptor returns response.data directly
+    // When responseType is 'blob', response.data IS the blob object
+    const blob = await apiClient.get(`/bookings/${id}/document`, {
       responseType: 'blob'
     });
 
-    // Create blob with correct MIME type from response
-    const blob = new Blob([response.data], { type: response.data.type });
+    if (!(blob instanceof Blob)) {
+      console.error('Expected blob but got:', typeof blob);
+      throw new Error('Server did not return a valid file');
+    }
+
     const blobUrl = window.URL.createObjectURL(blob);
     window.open(blobUrl, '_blank');
-
-    // Cleanup: in a real app you might want to revokeObjectURL after some time
-    // but for _blank tabs it needs to stay alive while loading.
   } catch (error) {
     console.error('Failed to fetch document:', error);
     throw error;
   }
 },
-
 /**
  * Confirm handover of a booking
  * @param {Object} params
