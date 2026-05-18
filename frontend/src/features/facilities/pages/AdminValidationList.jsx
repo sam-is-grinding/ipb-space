@@ -136,12 +136,14 @@ export default function AdminValidationList() {
 
   const handleModalSubmit = async (bookingId, actionType, rejectionReason) => {
     try {
-      // Backend contract: Hanya menerima status baru (tanpa alasan penolakan).
-      const formData = new FormData();
-      formData.append('new_status', actionType);
-      await bookingService.updateBookingStatus(bookingId, formData);
-      
+      // Backend contract: Sekarang menerima status baru dan alasan penolakan (opsional).
+      await bookingService.updateBookingStatus(bookingId, { 
+        new_status: actionType,
+        reason: actionType === 'rejected' ? rejectionReason : undefined
+      });
+
       // Update UI state lokal
+
       setPendingBookings(prev => prev.filter(b => b.id !== bookingId));
       setIsModalOpen(false);
       setSelectedBooking(null);

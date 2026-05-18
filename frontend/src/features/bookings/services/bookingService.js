@@ -61,7 +61,7 @@ export const bookingService = {
    * Update booking status (e.g., Approve, Reject)
    * @param {string|number} id 
    * @param {Object} data 
-   * @param {string} data.status - The new status
+   * @param {string} data.new_status - The new status
    * @param {string} [data.reason] - Reason for status change (if rejected)
    * @returns {Promise<any>}
    */

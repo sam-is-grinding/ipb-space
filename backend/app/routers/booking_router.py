@@ -8,7 +8,7 @@ from app.repositories.booking_repository import BookingRepository
 from app.repositories.facility_repository import FacilityRepository
 from app.repositories.user_repository import UserRepository
 from app.services.booking_service import BookingService
-from app.schemas.booking import BookingResponse
+from app.schemas.booking import BookingResponse, BookingStatusUpdate
 from app.schemas.http import HTTPResponse
 from app.api.dependencies import ensure_is_admin, get_current_user, ensure_is_facility_manager, ensure_is_admin_or_facility_manager
 from app.enums.user_enums import UserRoles
@@ -129,11 +129,15 @@ async def create_booking(
 @router.put("/{booking_id}/status", response_model=HTTPResponse)
 async def update_booking_status(
     booking_id: int,
-    new_status: str = Form(..., pattern="^(pending|approved|rejected|canceled|checked-in)$"),
+    status_update: BookingStatusUpdate,
     service: BookingService = Depends(get_booking_service),
     _: bool = Depends(ensure_is_admin_or_facility_manager)
 ) -> HTTPResponse:
-    updated_booking = await service.update_booking_status(booking_id, new_status)
+    updated_booking = await service.update_booking_status(
+        booking_id, 
+        status_update.new_status,
+        status_update.reason
+    )
     return HTTPResponse(
         success=True,
         data={"booking": BookingResponse.model_validate(updated_booking).model_dump(mode="json")},
