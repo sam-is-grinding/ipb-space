@@ -20,7 +20,7 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = () => {
     if (logout) logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
