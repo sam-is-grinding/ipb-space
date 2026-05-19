@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Sequence
 import structlog
 
@@ -191,7 +191,7 @@ class BookingService:
 
         # Generate handover token and expiration
         token = secrets.token_urlsafe(32)
-        expires_at = datetime.now() + timedelta(minutes=30)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
 
         await self.booking_repository.update(next_booking.id, {
             "handover_token": token,
@@ -224,7 +224,7 @@ class BookingService:
 
         stmt = select(Booking).where(
             Booking.handover_token == token,
-            Booking.handover_expires_at > datetime.now(),
+            Booking.handover_expires_at > datetime.now(timezone.utc),
             Booking.status == StatusApproval.PENDING.value
         ).options(
             joinedload(Booking.extra_items).joinedload(BookingItem.item),

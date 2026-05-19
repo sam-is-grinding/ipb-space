@@ -1,6 +1,6 @@
 import asyncio
 from typing import TypedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, text
 
@@ -569,7 +569,8 @@ async def seed_bookings() -> tuple[int, int]:
                 continue
 
             # Check if booking exists
-            booking_date = datetime.now() + timedelta(days=payload["date_offset"])
+            WIB = timezone(timedelta(hours=7))
+            booking_date = datetime.now(timezone.utc) + timedelta(days=payload["date_offset"])
             booking_date = booking_date.replace(hour=0, minute=0, second=0, microsecond=0)
             
             query_booking = select(Booking).where(
@@ -583,8 +584,8 @@ async def seed_bookings() -> tuple[int, int]:
                 skipped += 1
                 continue
 
-            start_time = booking_date.replace(hour=payload["start_hour"], minute=0)
-            end_time = booking_date.replace(hour=payload["end_hour"], minute=0)
+            start_time = booking_date.replace(hour=payload["start_hour"], minute=0).replace(tzinfo=WIB)
+            end_time = booking_date.replace(hour=payload["end_hour"], minute=0).replace(tzinfo=WIB)
 
             booking = Booking(
                 facility_id=facility.id,
@@ -596,7 +597,7 @@ async def seed_bookings() -> tuple[int, int]:
                 date_of_booking=booking_date,
                 start_time=start_time,
                 end_time=end_time,
-                updated_at=datetime.now(),
+                updated_at=datetime.now(timezone.utc),
             )
             session.add(booking)
             await session.flush()

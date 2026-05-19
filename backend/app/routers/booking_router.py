@@ -94,9 +94,11 @@ async def create_booking(
     current_user: UserResponse = Depends(get_current_user),
     service: BookingService = Depends(get_booking_service),
 ) -> HTTPResponse:
-    booking_date = datetime.strptime(date_of_booking, "%Y-%m-%d")
-    start_dt = datetime.strptime(f"{date_of_booking} {start_time}", "%Y-%m-%d %H:%M")
-    end_dt = datetime.strptime(f"{date_of_booking} {end_time}", "%Y-%m-%d %H:%M")
+    from datetime import timezone, timedelta
+    WIB = timezone(timedelta(hours=7))
+    booking_date = datetime.strptime(date_of_booking, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    start_dt = datetime.strptime(f"{date_of_booking} {start_time}", "%Y-%m-%d %H:%M").replace(tzinfo=WIB)
+    end_dt = datetime.strptime(f"{date_of_booking} {end_time}", "%Y-%m-%d %H:%M").replace(tzinfo=WIB)
 
     import json
     extra_items_list = None
