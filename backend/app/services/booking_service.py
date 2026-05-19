@@ -144,7 +144,7 @@ class BookingService:
             
         return success
 
-    async def update_booking_status(self, booking_id: int, new_status: str):
+    async def update_booking_status(self, booking_id: int, new_status: str, reason: str | None = None):
         old_booking = await self.booking_repository.get_by_id(booking_id)
         if not old_booking:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
@@ -157,7 +157,11 @@ class BookingService:
         # Trigger handover if an APPROVED booking is canceled
         trigger_handover = (old_booking.status == StatusApproval.APPROVED.value and new_status == StatusApproval.CANCELED.value)
 
-        updated_booking = await self.booking_repository.update(old_booking.id, {"status": StatusApproval(new_status).value})
+        update_data = {"status": StatusApproval(new_status).value}
+        if reason is not None:
+            update_data["reason"] = reason
+
+        updated_booking = await self.booking_repository.update(old_booking.id, update_data)
 
         logger.info("booking_status_updated", booking_id=booking_id, new_status=new_status)
         if trigger_handover:

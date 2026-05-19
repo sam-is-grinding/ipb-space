@@ -60,6 +60,7 @@ class SeedBooking(TypedDict):
     number_of_attendees: int
     document_url: str | None
     status: str
+    reason: str | None
     date_offset: int  # days from now
     start_hour: int
     end_hour: int
@@ -319,6 +320,7 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "number_of_attendees": 40,
         "document_url": "https://example.com/docs/surat_peminjaman_rk1.pdf",
         "status": StatusApproval.APPROVED.value,
+        "reason": "Dokumen lengkap dan jadwal tersedia",
         "date_offset": 1,
         "start_hour": 8,
         "end_hour": 10,
@@ -331,6 +333,7 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "number_of_attendees": 30,
         "document_url": "https://example.com/docs/uts_lab_pemrograman.pdf",
         "status": "checked-in",
+        "reason": None,
         "date_offset": 0,
         "start_hour": 9,
         "end_hour": 12,
@@ -343,6 +346,7 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "number_of_attendees": 120,
         "document_url": "https://example.com/docs/proposal_seminar_fem.pdf",
         "status": StatusApproval.PENDING.value,
+        "reason": None,
         "date_offset": 3,
         "start_hour": 13,
         "end_hour": 16,
@@ -355,6 +359,7 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "number_of_attendees": 20,
         "document_url": "https://example.com/docs/rapat_hima_rektorat.pdf",
         "status": StatusApproval.REJECTED.value,
+        "reason": "Ruangan sedang digunakan untuk kegiatan senat universitas",
         "date_offset": -1,
         "start_hour": 14,
         "end_hour": 16,
@@ -367,6 +372,7 @@ SEED_BOOKINGS: list[SeedBooking] = [
         "number_of_attendees": 6,
         "document_url": None,
         "status": StatusApproval.PENDING.value,
+        "reason": None,
         "date_offset": 2,
         "start_hour": 14,
         "end_hour": 17,
@@ -594,6 +600,7 @@ async def seed_bookings() -> tuple[int, int]:
                 number_of_attendees=payload["number_of_attendees"],
                 document_url=payload["document_url"],
                 status=payload["status"],
+                reason=payload["reason"],
                 date_of_booking=booking_date,
                 start_time=start_time,
                 end_time=end_time,

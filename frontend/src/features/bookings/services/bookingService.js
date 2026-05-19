@@ -61,7 +61,7 @@ export const bookingService = {
    * Update booking status (e.g., Approve, Reject)
    * @param {string|number} id 
    * @param {Object} data 
-   * @param {string} data.status - The new status
+   * @param {string} data.new_status - The new status
    * @param {string} [data.reason] - Reason for status change (if rejected)
    * @returns {Promise<any>}
    */
@@ -106,19 +106,44 @@ export const bookingService = {
       responseType: 'blob' // Important for file downloads
     });
   },
+/**
+ * Delete a booking document
+ * @param {string|number} id
+ * @returns {Promise<any>}
+ */
+deleteBookingDocument: async (id) => {
+  return await apiClient.delete(`/bookings/${id}/document`);
+},
 
-  /**
-   * Delete a booking document
-   * @param {string|number} id 
-   * @returns {Promise<any>}
-   */
-  deleteBookingDocument: async (id) => {
-    return await apiClient.delete(`/bookings/${id}/document`);
-  },
+/**
+ * Open and view a booking document in a new tab
+ * Handles authentication and correct MIME types via Blob
+ * @param {string|number} id 
+ */
+viewDocument: async (id) => {
+  try {
+    // apiClient response interceptor returns response.data directly
+    // When responseType is 'blob', response.data IS the blob object
+    const blob = await apiClient.get(`/bookings/${id}/document`, {
+      responseType: 'blob'
+    });
 
-  /**
-   * Confirm handover of a booking
-   * @param {Object} params
+    if (!(blob instanceof Blob)) {
+      console.error('Expected blob but got:', typeof blob);
+      throw new Error('Server did not return a valid file');
+    }
+
+    const blobUrl = window.URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank');
+  } catch (error) {
+    console.error('Failed to fetch document:', error);
+    throw error;
+  }
+},
+/**
+ * Confirm handover of a booking
+ * @param {Object} params
+...
    * @param {string} params.code - Handover confirmation code
    * @returns {Promise<any>}
    */

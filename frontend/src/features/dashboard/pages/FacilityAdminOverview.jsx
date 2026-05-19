@@ -119,7 +119,7 @@ export default function FacilityAdminOverview() {
   // --- DYNAMIC RECENT ACTIVITY ---
   const recentBookings = useMemo(() => {
     return [...bookings]
-      .sort((a, b) => new Date(b.updated_at || b.created_at || b.date_of_booking) - new Date(a.updated_at || a.created_at || a.date_of_booking))
+      .sort((a, b) => new Date(a.created_at || a.date_of_booking) - new Date(b.created_at || b.date_of_booking))
       .slice(0, 3);
   }, [bookings]);
 
@@ -280,15 +280,16 @@ export default function FacilityAdminOverview() {
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Pemohon</th>
                 <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Aksi & Ruangan</th>
-                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Waktu</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Dibuat Pada</th>
+                <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider">Terakhir Update</th>
                 <th className="py-4 px-6 text-xs font-black text-slate-500 uppercase tracking-wider text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading || isLookupLoading ? (
-                <tr><td colSpan="4" className="py-8 text-center text-slate-400 text-sm font-medium animate-pulse">Memuat data aktivitas...</td></tr>
+                <tr><td colSpan="5" className="py-8 text-center text-slate-400 text-sm font-medium animate-pulse">Memuat data aktivitas...</td></tr>
               ) : recentBookings.length === 0 ? (
-                <tr><td colSpan="4" className="py-8 text-center text-slate-400 text-sm font-medium">Belum ada aktivitas.</td></tr>
+                <tr><td colSpan="5" className="py-8 text-center text-slate-400 text-sm font-medium">Belum ada aktivitas.</td></tr>
               ) : (
                 recentBookings.map((b, idx) => {
                   const status = (b.status || '').toLowerCase();
@@ -308,8 +309,12 @@ export default function FacilityAdminOverview() {
                   const userName = userMap[b.user_id] || `Pemohon #${b.user_id}`;
                   const roomName = facilityMap[b.facility_id] || 'Ruangan';
                   const actionText = getActionText(b.status);
-                  const ts = b.updated_at || b.created_at || b.date_of_booking;
-                  const formattedDate = ts ? new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                  
+                  const createdTs = b.created_at || b.date_of_booking;
+                  const formattedCreatedAt = createdTs ? new Date(createdTs).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                  
+                  const updatedTs = b.updated_at || b.created_at || b.date_of_booking;
+                  const formattedUpdatedAt = updatedTs ? new Date(updatedTs).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
@@ -320,7 +325,8 @@ export default function FacilityAdminOverview() {
                         <div className="font-bold text-slate-700 text-sm">{actionText}</div>
                         <div className="text-xs font-semibold text-slate-500 mt-1">{roomName}</div>
                       </td>
-                      <td className="py-4 px-6 font-semibold text-slate-600 text-sm">{formattedDate}</td>
+                      <td className="py-4 px-6 font-semibold text-slate-600 text-sm">{formattedCreatedAt}</td>
+                      <td className="py-4 px-6 font-semibold text-slate-600 text-sm">{formattedUpdatedAt}</td>
                       <td className="py-4 px-6 w-32">
                         <span className={statusBadge}>{statusLabel}</span>
                       </td>

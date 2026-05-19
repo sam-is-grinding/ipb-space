@@ -2,15 +2,16 @@ import React from 'react';
 import { Cube, FilePdf } from '@phosphor-icons/react';
 import { getConditionLabel, getConditionClass } from '../../facilities/constants/facilityConstants';
 import BookingActionFooter from './BookingActionFooter';
+import { bookingService } from '../services/bookingService';
+import { toast } from 'react-hot-toast';
 
 export default function BookingDetailSidebar({ booking, status, onCancel }) {
-  const getDocumentAbsoluteUrl = (url) => {
-    if (!url) return '#';
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
+  const handleViewDocument = async () => {
+    try {
+      await bookingService.viewDocument(booking.id);
+    } catch (error) {
+      toast.error('Gagal membuka dokumen pendukung.');
     }
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
-    return `${baseUrl.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   return (
@@ -65,15 +66,13 @@ export default function BookingDetailSidebar({ booking, status, onCancel }) {
         </div>
 
         {booking.document_url ? (
-          <a 
-            href={getDocumentAbsoluteUrl(booking.document_url)} 
-            target="_blank" 
-            rel="noopener noreferrer"
+          <button 
+            onClick={handleViewDocument}
             className="w-full flex items-center justify-center gap-2.5 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-all font-black text-sm border border-blue-200/60 shadow-sm active:scale-99 cursor-pointer"
           >
             <FilePdf size={20} weight="fill" />
-            Buka Surat Permohonan (PDF)
-          </a>
+            Buka Surat Permohonan
+          </button>
         ) : (
           <div className="text-center py-4 bg-gray-50/50 rounded-xl border border-dashed border-gray-200 text-gray-400 text-xs italic">
             Tidak ada dokumen pendukung terlampir.
