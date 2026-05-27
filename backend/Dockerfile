@@ -11,5 +11,5 @@ COPY ./alembic /code/alembic
 COPY ./alembic.ini /code/alembic.ini
 COPY ./seed.py /code/seed.py
 
-# CMD ["sh", "-c", "alembic upgrade head && python /code/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "alembic upgrade head && python /code/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
