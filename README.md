@@ -1,7 +1,7 @@
 # Punya orang
  
 Repository ini adalah fork dari project [IPB Space](https://github.com/HusniAbdillah/ipb-space).
-Bedanya di sini ada tambahanan protokol keamanan(?) atau apapun namanya, untuk tugas pada mata kuliah KOM1315
+Bedanya di sini ada tambahan protokol keamanan(?) atau apapun namanya, untuk tugas pada mata kuliah KOM1315
 ---
  
 # copy_source.py
