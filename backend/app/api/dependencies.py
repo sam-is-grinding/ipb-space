@@ -7,7 +7,7 @@ from app.core.security import Security
 from app.services.user_service import UserService
 from app.services.auth_service import AuthService
 from app.schemas.user import UserResponse
-from app.repositories import user_repository
+from app.repositories import user_repository, session_repository
 from app.enums.user_enums import UserRoles
 from app.core.logging import logger
 
@@ -19,8 +19,12 @@ async def get_user_service(db: AsyncSession = Depends(get_db)) -> UserService:
     return UserService(repo)
 
 async def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
-    repo = user_repository.UserRepository(db)
-    return AuthService(repo)
+    user_repo = user_repository.UserRepository(db)
+    session_repo = session_repository.SessionRepository(db)
+    return AuthService(
+        user_repo,
+        session_repo,
+    )
 
 async def get_current_user(
         token: str = Depends(oauth2_scheme),

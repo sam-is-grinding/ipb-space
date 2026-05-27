@@ -11,17 +11,13 @@ export default function Login() {
   const { login, loading: authLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      if (user.role === 'civitas') {
-        navigate('/civitas/dashboard');
-      } else if (user.role === 'facility_manager') {
-        navigate('/admin/facility/dashboard');
-      } else if (user.role === 'admin') {
-        navigate('/admin/super/master-data');
-      } else {
-        navigate('/');
-      }
+      if (user.role === 'civitas') navigate('/civitas/dashboard', { replace: true });
+      else if (user.role === 'facility_manager') navigate('/admin/facility/dashboard', { replace: true });
+      else if (user.role === 'admin') navigate('/admin/super/master-data', { replace: true });
+      else navigate('/', { replace: true });
     }
   }, [authLoading, isAuthenticated, user, navigate]);
 
@@ -36,17 +32,11 @@ export default function Login() {
       setLoading(true);
       const userObj = await login(email, password);
       toast.success('Login berhasil!');
-      
-      // Role-based redirect
-      if (userObj.role === 'civitas') {
-        navigate('/civitas/dashboard');
-      } else if (userObj.role === 'facility_manager') {
-        navigate('/admin/facility/dashboard');
-      } else if (userObj.role === 'admin') {
-        navigate('/admin/super/master-data');
-      } else {
-        navigate('/');
-      }
+
+      if (userObj.role === 'civitas') navigate('/civitas/dashboard', { replace: true });
+      else if (userObj.role === 'facility_manager') navigate('/admin/facility/dashboard', { replace: true });
+      else if (userObj.role === 'admin') navigate('/admin/super/master-data', { replace: true });
+      else navigate('/', { replace: true });
     } catch (error) {
       const msg = error.response?.data?.data?.error?.message || 'Login gagal. Periksa kembali email dan kata sandi Anda.';
       toast.error(msg);
@@ -55,6 +45,7 @@ export default function Login() {
     }
   };
 
+  // Tampilkan spinner saat cek session awal — SETELAH semua hooks
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center">

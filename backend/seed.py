@@ -9,20 +9,20 @@ from app.core.security import Security
 from app.enums.user_enums import UserRoles
 from app.models.asset import Asset
 from app.models.facility import Facility
-from app.models.user import User, Civitas, FacilityAdmin, SuperAdmin
+from app.models.user import User
 from app.models.booking import Booking
 from app.models.items import Items
 from app.models.extraItems import ExtraItems
 from app.models.facilityAsset import FacilityAsset
 from app.enums.status_approval import StatusApproval
-
+from app.models.booking import BookingItem
 
 class SeedUser(TypedDict):
     fullname: str
     idnum: str
     email: str
     password: str
-    role: str
+    role: UserRoles
     work_unit: str | None
     authority_code: str | None
 
@@ -73,7 +73,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "198001012005011001",
         "email": "admin@ipbspace.com",
         "password": "Admin1234",
-        "role": UserRoles.ADMIN.value,
+        "role": UserRoles.ADMIN,
         "work_unit": None,
         "authority_code": "SA-IPB-001",
     },
@@ -82,7 +82,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "197505122002121002",
         "email": "manager@ipbspace.com",
         "password": "Manager1234",
-        "role": UserRoles.FACILITY_MANAGER.value,
+        "role": UserRoles.FACILITY_MANAGER,
         "work_unit": "Direktorat Sarana dan Prasarana Utama",
         "authority_code": None,
     },
@@ -91,7 +91,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "198311052008012003",
         "email": "manager2@ipbspace.com",
         "password": "Manager1234",
-        "role": UserRoles.FACILITY_MANAGER.value,
+        "role": UserRoles.FACILITY_MANAGER,
         "work_unit": "Fakultas Kehutanan dan Lingkungan",
         "authority_code": None,
     },
@@ -100,7 +100,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "G64180001",
         "email": "civitas@ipbspace.com",
         "password": "Civitas1234",
-        "role": UserRoles.CIVITAS.value,
+        "role": UserRoles.CIVITAS,
         "work_unit": None,
         "authority_code": None,
     },
@@ -109,7 +109,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "J3D120099",
         "email": "mahasiswa1@ipbspace.com",
         "password": "User1234",
-        "role": UserRoles.CIVITAS.value,
+        "role": UserRoles.CIVITAS,
         "work_unit": None,
         "authority_code": None,
     },
@@ -118,7 +118,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "197008151995121001",
         "email": "dosen1@ipbspace.com",
         "password": "User1234",
-        "role": UserRoles.CIVITAS.value,
+        "role": UserRoles.CIVITAS,
         "work_unit": None,
         "authority_code": None,
     },
@@ -127,7 +127,7 @@ SEED_USERS: list[SeedUser] = [
         "idnum": "198504232010012002",
         "email": "tendik1@ipbspace.com",
         "password": "User1234",
-        "role": UserRoles.CIVITAS.value,
+        "role": UserRoles.CIVITAS,
         "work_unit": None,
         "authority_code": None,
     },
@@ -394,50 +394,32 @@ async def seed_users() -> tuple[int, int]:
 
     async with AsyncSessionLocal() as session:
         for payload in SEED_USERS:
-            query = select(User).where(User.email == payload["email"])
-            existing_user = (await session.execute(query)).scalar_one_or_none()
+
+            query = select(User).where(
+                User.email == payload["email"]
+            )
+
+            existing_user = (
+                await session.execute(query)
+            ).scalar_one_or_none()
 
             if existing_user:
                 skipped += 1
                 continue
 
-            role = payload["role"]
-            hashed_pwd = Security.hash_password(payload["password"])
+            user = User(
+                fullname=payload["fullname"],
+                idnum=payload["idnum"],
+                email=payload["email"],
+                hashed_password=Security.hash_password(
+                    payload["password"]
+                ),
 
-            if role == UserRoles.CIVITAS.value:
-                user = Civitas(
-                    fullname=payload["fullname"],
-                    idnum=payload["idnum"],
-                    email=payload["email"],
-                    hashed_password=hashed_pwd,
-                    role=role,
-                )
-            elif role == UserRoles.FACILITY_MANAGER.value:
-                user = FacilityAdmin(
-                    fullname=payload["fullname"],
-                    idnum=payload["idnum"],
-                    email=payload["email"],
-                    hashed_password=hashed_pwd,
-                    role=role,
-                    work_unit=payload["work_unit"],
-                )
-            elif role == UserRoles.ADMIN.value:
-                user = SuperAdmin(
-                    fullname=payload["fullname"],
-                    idnum=payload["idnum"],
-                    email=payload["email"],
-                    hashed_password=hashed_pwd,
-                    role=role,
-                    authority_code=payload["authority_code"],
-                )
-            else:
-                user = User(
-                    fullname=payload["fullname"],
-                    idnum=payload["idnum"],
-                    email=payload["email"],
-                    hashed_password=hashed_pwd,
-                    role=role,
-                )
+                role=payload["role"],
+
+                work_unit=payload["work_unit"],
+                authority_code=payload["authority_code"],
+            )
 
             session.add(user)
             inserted += 1
@@ -604,14 +586,12 @@ async def seed_bookings() -> tuple[int, int]:
                 date_of_booking=booking_date,
                 start_time=start_time,
                 end_time=end_time,
-                updated_at=datetime.now(timezone.utc),
             )
             session.add(booking)
             await session.flush()
 
             # Add extra items
             if payload["extra_item_names"]:
-                from app.models.booking import BookingItem
                 for item_name in payload["extra_item_names"]:
                     query_item = select(Items).where(Items.name == item_name)
                     item = (await session.execute(query_item)).scalar_one_or_none()

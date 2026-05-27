@@ -1,3 +1,51 @@
+# Punya orang
+ 
+Repository ini adalah fork dari project [IPB Space](https://github.com/HusniAbdillah/ipb-space).
+Bedanya di sini ada tambahanan protokol keamanan(?) atau apapun namanya, untuk tugas pada mata kuliah KOM1315
+---
+ 
+# copy_source.py
+ 
+Script ini dipakai untuk menyalin file-file _source code_ yang (mungkin) relevan dari folder backend ke struktur folder target (misal `03_Source_Code`).
+ 
+## Cara pakai
+ 
+Jalankan scriptnya:
+ 
+```bash
+python copy_source.py
+```
+ 
+Nanti akan minta dua input path:
+ 
+- **SOURCE**: path ke folder `backend` project kamu
+- **TARGET**: path ke folder `03_Source_Code` tujuan
+Contoh input:
+ 
+```
+Input SOURCE backend folder path:
+> C:\Users\ipb-space\backend
+ 
+Input TARGET 03_Source_Code folder path:
+> C:\Users\KOM1315_SmtGenap26_Kelompok04_IPBSpace\03_Source_Code
+```
+ 
+> Pakai path absolut supaya ga ribet tentang working directory.
+ 
+## Kalau mau lebih gampang
+
+Edit langsung dua variabel di bagian atas script biar ga perlu input manual tiap kali:
+ 
+```python
+SOURCE_ROOT = r"C:\Users\ipb-space\backend"
+TARGET_ROOT = r"C:\Users\KOM1315_SmtGenap26_Kelompok04_IPBSpace\03_Source_Code"
+```
+Tapi mendingan duplicate scriptnya, misal jadi `copy_stuff_with_path.py` gitu, terus masukin ke `.gitginore` supaya ga ke push ke repo (yg `copy_stuff_with_path.py` udah ada di `.gitignore` nya btw)
+
+Mapping lengkap file yang disalin bisa dilihat dan diubah di bagian `MAPPINGS` dalam script.
+ 
+---
+
 # 🏛️ IPB Space
 
 Campus facility booking and queue management system for IPB University.

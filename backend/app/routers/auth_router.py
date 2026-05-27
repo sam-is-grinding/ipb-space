@@ -1,17 +1,24 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, status, Request
 
-from app.core.database import get_db
 from app.services.auth_service import AuthService
-from app.repositories import user_repository
 from app.schemas.user import UserCreate, UserLogin
 from app.schemas.http import HTTPResponse
+from app.schemas.token import refreshTokenRequest
+from app.api.dependencies import get_auth_service
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-async def get_auth_service(db: AsyncSession = Depends(get_db)):
-    repo = user_repository.UserRepository(db)
-    return AuthService(repo)
+# helper
+def _extract_client_info(request: Request) -> tuple[str | None, str | None]:
+    """Return (ip_address, user_agent) from the incoming request."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    ip = forwarded_for.split(",")[0].strip() if forwarded_for else (
+        request.client.host if request.client else None
+    )
+    ua = request.headers.get("User-Agent")
+    return ip, ua
+
 
 @router.post("/register", response_model=HTTPResponse, status_code=status.HTTP_201_CREATED)
 async def register(
@@ -36,8 +43,7 @@ async def register(
     - Must contain both letters and numbers
     - Cannot contain whitespace characters
     """
-    response = await service.register(data)
-
+    await service.register(data)
     return HTTPResponse(
         success=True,
         data={}
@@ -85,3 +91,19 @@ async def refresh_access_token(
         success=True,
         data={"token": new_token}
     )
+
+
+
+@router.post("/logout", response_model=HTTPResponse)
+async def logout(
+    body: refreshTokenRequest,
+    request: Request,
+    service: AuthService = Depends(get_auth_service),
+) -> HTTPResponse:
+    """
+    Revoke the current session identified by the refresh token.
+    The client should discard both the access token and refresh token after calling this.
+    """
+    ip, ua = _extract_client_info(request)
+    await service.logout(body.refresh_token, ip_address=ip, user_agent=ua)
+    return HTTPResponse(success=True, data={"message": "Logged out successfully"})

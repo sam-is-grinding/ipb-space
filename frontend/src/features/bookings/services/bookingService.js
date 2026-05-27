@@ -1,3 +1,4 @@
+import { CodaLogoIcon } from '@phosphor-icons/react';
 import apiClient from '../../../shared/services/api/apiClient';
 
 /**
@@ -122,22 +123,32 @@ deleteBookingDocument: async (id) => {
  */
 viewDocument: async (id) => {
   try {
-    // apiClient response interceptor returns response.data directly
-    // When responseType is 'blob', response.data IS the blob object
     const blob = await apiClient.get(`/bookings/${id}/document`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
-
-    if (!(blob instanceof Blob)) {
-      console.error('Expected blob but got:', typeof blob);
-      throw new Error('Server did not return a valid file');
-    }
 
     const blobUrl = window.URL.createObjectURL(blob);
     window.open(blobUrl, '_blank');
+
   } catch (error) {
-    console.error('Failed to fetch document:', error);
-    throw error;
+    let message = 'Gagal membuka dokumen';
+
+    if (error.response?.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text();
+        const json = JSON.parse(text);
+
+        message =
+          json?.data?.error?.message ||
+          json?.detail ||
+          message;
+
+      } catch (e) {
+        console.error('Failed parsing blob:', e);
+      }
+    }
+
+    throw new Error(message);
   }
 },
 /**

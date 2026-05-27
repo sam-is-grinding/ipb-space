@@ -14,24 +14,16 @@ export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
-    if (!email) {
-      newErrors.email = 'Email tidak boleh kosong.';
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Format email tidak valid.';
-    }
+    if (!email) newErrors.email = 'Email tidak boleh kosong.';
+    else if (!validateEmail(email)) newErrors.email = 'Format email tidak valid.';
 
-    if (!password) {
-      newErrors.password = 'Kata sandi tidak boleh kosong.';
-    }
+    if (!password) newErrors.password = 'Kata sandi tidak boleh kosong.';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -45,17 +37,22 @@ export default function LoginForm() {
       const user = await login(email, password);
       toast.success('Selamat datang!');
 
-      if (user.role === 'civitas') {
-        navigate('/civitas/dashboard');
-      } else if (user.role === 'facility_manager') {
-        navigate('/admin/facility/dashboard');
-      } else if (user.role === 'admin') {
-        navigate('/admin/super/master-data');
-      } else {
-        navigate('/');
-      }
+      if (user.role === 'civitas') navigate('/civitas/dashboard');
+      else if (user.role === 'facility_manager') navigate('/admin/facility/dashboard');
+      else if (user.role === 'admin') navigate('/admin/super/master-data');
+      else navigate('/');
     } catch (error) {
-      toast.error('Email atau kata sandi salah.');
+      const backendMessage = error?.response?.data?.data?.error?.message;
+      const status = error?.response?.status;
+
+      if (status === 403 && backendMessage) {
+        // Account locked — show the backend's message verbatim (includes time remaining)
+        toast.error(backendMessage, { duration: 6000 });
+      } else if (backendMessage) {
+        toast.error(backendMessage);
+      } else {
+        toast.error('Email atau kata sandi salah.');
+      }
     } finally {
       setLoading(false);
     }
@@ -63,6 +60,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleLogin} className="space-y-5" noValidate>
+      {/* Email */}
       <div>
         <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="email">
           Email
@@ -80,13 +78,17 @@ export default function LoginForm() {
               if (errors.email) setErrors({ ...errors, email: '' });
             }}
             placeholder="nama@email.com"
-            className={`w-full pl-10 pr-4 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${errors.email ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
-              }`}
+            className={`w-full pl-10 pr-4 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${
+              errors.email
+                ? 'border-danger focus:ring-danger'
+                : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
+            }`}
           />
         </div>
         {errors.email && <p className="mt-1 text-xs text-danger font-medium">{errors.email}</p>}
       </div>
 
+      {/* Password */}
       <div>
         <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="password">
           Kata Sandi
@@ -104,8 +106,11 @@ export default function LoginForm() {
               if (errors.password) setErrors({ ...errors, password: '' });
             }}
             placeholder="Masukkan kata sandi"
-            className={`w-full pl-10 pr-10 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${errors.password ? 'border-danger focus:ring-danger' : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
-              }`}
+            className={`w-full pl-10 pr-10 py-3 rounded-btn border bg-surface-lowest text-on-surface outline-none transition-all focus:ring-2 ${
+              errors.password
+                ? 'border-danger focus:ring-danger'
+                : 'border-gray-300 focus:ring-primary-container focus:border-transparent'
+            }`}
           />
           <button
             type="button"
@@ -118,6 +123,7 @@ export default function LoginForm() {
         {errors.password && <p className="mt-1 text-xs text-danger font-medium">{errors.password}</p>}
       </div>
 
+      {/* Submit */}
       <div className="pt-2">
         <button
           type="submit"

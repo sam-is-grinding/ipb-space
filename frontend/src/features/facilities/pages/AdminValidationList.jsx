@@ -120,7 +120,7 @@ export default function AdminValidationList() {
   }).length;
 
   // Ruangan maintenance: facilities with condition indicating maintenance
-  const ruanganMaintenance = facilities.filter(f => 
+  const ruanganMaintenance = facilities.filter(f =>
     f.condition && (f.condition.toLowerCase() === 'maintenance' || f.condition.toLowerCase() === 'under_maintenance')
   ).length;
 
@@ -128,9 +128,10 @@ export default function AdminValidationList() {
     try {
       await bookingService.viewDocument(bookingId);
     } catch (error) {
-      toast.error('Gagal membuka atau mengunduh dokumen pendukung.');
+      toast.error(error.message);
     }
   };
+
   const openValidationModal = (booking) => {
     setSelectedBooking(booking);
     setIsModalOpen(true);
@@ -139,7 +140,7 @@ export default function AdminValidationList() {
   const handleModalSubmit = async (bookingId, actionType, rejectionReason) => {
     try {
       // Backend contract: Sekarang menerima status baru dan alasan penolakan (opsional).
-      await bookingService.updateBookingStatus(bookingId, { 
+      await bookingService.updateBookingStatus(bookingId, {
         new_status: actionType,
         reason: actionType === 'rejected' ? rejectionReason : undefined
       });
@@ -152,9 +153,9 @@ export default function AdminValidationList() {
 
       // Fake Toast Workaround: Tampilkan alasan di frontend seolah-olah terekam di sistem
       if (actionType === 'rejected') {
-         toast.success(`Peminjaman ditolak. Alasan: ${rejectionReason}`);
+        toast.success(`Peminjaman ditolak. Alasan: ${rejectionReason}`);
       } else {
-         toast.success('Peminjaman berhasil disetujui.');
+        toast.success('Peminjaman berhasil disetujui.');
       }
     } catch (error) {
       console.error(`Failed to update booking status to ${actionType}:`, error);
@@ -183,7 +184,7 @@ export default function AdminValidationList() {
               <h3 className="text-2xl font-black text-primary leading-none mt-1">{isLoading ? '-' : totalPermohonan}</h3>
             </div>
           </div>
-          
+
           <div className="bg-white p-5 rounded-card shadow-ambient border border-gray-100 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-warning shrink-0">
               <ClockCounterClockwise size={24} weight="fill" />
@@ -252,8 +253,8 @@ export default function AdminValidationList() {
 
                     // Dynamic subtext from full user detail payload
                     const userDetail = userDetailMap[booking.user_id];
-                    const userSubtext = userDetail 
-                      ? `${userDetail.role} - ${userDetail.work_unit}` 
+                    const userSubtext = userDetail
+                      ? `${userDetail.role} - ${userDetail.work_unit}`
                       : 'Civitas - IPB Space';
 
                     const createdTs = booking.created_at || booking.date_of_booking;
@@ -326,7 +327,7 @@ export default function AdminValidationList() {
         </section>
       </div>
 
-      <ValidationActionModal 
+      <ValidationActionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         booking={selectedBooking}

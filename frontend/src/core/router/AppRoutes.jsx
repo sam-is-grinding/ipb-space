@@ -28,6 +28,7 @@ import DigitalTicket from '../../features/tickets/pages/DigitalTicket';
 
 import NotFound from '../../shared/components/common/NotFound';
 import ProtectedRoute from './ProtectedRoute';
+import GuestRoute from './GuestRoute';
 
 /**
  * Helper component that dynamically wraps public pages with the correct
@@ -79,9 +80,10 @@ const SystemAuditLog = () => <div className="p-10 text-center">Audit Log Sistem<
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* 1. GATED AUTH ROUTES */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route element={<GuestRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
 
       {/* 2. DYNAMIC SHARED ROUTES */}
       <Route element={<DynamicLayoutWrapper />}>
