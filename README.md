@@ -108,6 +108,7 @@ npm run dev
 
 ## 👥 Contributors
 
+### (Ini author aslinya btw, bukan sayah)
 ### Kelompok 6 - Paralel 3 - KOM1337 Analisis dan Desain Sistem
 
 | Nama | NIM |
