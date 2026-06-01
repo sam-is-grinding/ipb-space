@@ -14,10 +14,15 @@ export default function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
-      if (user.role === 'civitas') navigate('/civitas/dashboard', { replace: true });
-      else if (user.role === 'facility_manager') navigate('/admin/facility/dashboard', { replace: true });
-      else if (user.role === 'admin') navigate('/admin/super/master-data', { replace: true });
-      else navigate('/', { replace: true });
+      if (user.role === 'civitas') {
+        navigate('/civitas/dashboard', { replace: true });
+      } else if (user.role === 'facility_manager') {
+        navigate('/admin/facility/validations', { replace: true });
+      } else if (user.role === 'admin') {
+        navigate('/admin/super/overview', { replace: true });
+      } else {
+        navigate('/');
+      }
     }
   }, [authLoading, isAuthenticated, user, navigate]);
 
@@ -32,11 +37,17 @@ export default function Login() {
       setLoading(true);
       const userObj = await login(email, password);
       toast.success('Login berhasil!');
-
-      if (userObj.role === 'civitas') navigate('/civitas/dashboard', { replace: true });
-      else if (userObj.role === 'facility_manager') navigate('/admin/facility/dashboard', { replace: true });
-      else if (userObj.role === 'admin') navigate('/admin/super/master-data', { replace: true });
-      else navigate('/', { replace: true });
+      
+      // Role-based redirect
+      if (userObj.role === 'civitas') {
+        navigate('/civitas/dashboard', { replace: true });
+      } else if (userObj.role === 'facility_manager') {
+        navigate('/admin/facility/validations', { replace: true });
+      } else if (userObj.role === 'admin') {
+        navigate('/admin/super/master-data', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (error) {
       const msg = error.response?.data?.data?.error?.message || 'Login gagal. Periksa kembali email dan kata sandi Anda.';
       toast.error(msg);

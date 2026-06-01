@@ -1,6 +1,8 @@
+// Verification route wrapper
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { normalizeRole } from '../../shared/utils/authRole';
 
 export default function ProtectedRoute({ allowedRoles }) {
   const { user, isAuthenticated, loading } = useAuth();
@@ -19,21 +21,14 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  const mapRole = (backendRole) => {
-    if (backendRole === 'civitas') return 'Civitas';
-    if (backendRole === 'facility_manager') return 'FacilityAdmin';
-    if (backendRole === 'admin') return 'SuperAdmin';
-    return backendRole;
-  };
-
-  const userRole = mapRole(user.role);
+  const userRole = normalizeRole(user.role);
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     if (userRole === 'SuperAdmin') {
-      return <Navigate to="/admin/super/master-data" replace />;
+      return <Navigate to="/admin/super/overview" replace />;
     }
     if (userRole === 'FacilityAdmin') {
-      return <Navigate to="/admin/facility/dashboard" replace />;
+      return <Navigate to="/admin/facility/validations" replace />;
     }
     return <Navigate to="/civitas/dashboard" replace />;
   }

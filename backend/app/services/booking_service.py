@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Sequence
+import asyncio
 import structlog
 
 from fastapi import HTTPException, UploadFile, status
@@ -13,6 +14,13 @@ from app.storage.document_storage import DocumentStorage
 from app.enums.status_approval import StatusApproval
 from app.services.mail_service import MailService
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+HARDCODE_MAIL_RECIPIENT = os.getenv("HARDCODE_MAIL_RECIPIENT", "") 
 
 logger = structlog.get_logger()
 
@@ -86,12 +94,31 @@ class BookingService:
         # Process extra items
         if extra_items:
             from app.models.booking import BookingItem
+            from app.repositories.item_repository import ItemRepository
+            from app.repositories.extra_item_repository import ExtraItemRepository
+            from app.services.item_service import ItemService
+
+            db = self.booking_repository.db
+            item_repo = ItemRepository(db)
+            extra_repo = ExtraItemRepository(db)
+            item_service = ItemService(item_repo, extra_repo)
+
+            dynamic_extras = await item_service.list_extra_items(start_time, end_time)
+            dynamic_avail = {ei.item.id: ei.item.available_stock for ei in dynamic_extras if ei.item}
+
             for item_data in extra_items:
                 # expecting a dict like {"itemId": 1, "quantity": 2}
                 item_id = item_data.get("itemId")
                 qty = item_data.get("quantity", 1)
                 if item_id:
-                    booking_item = BookingItem(item_id=int(item_id), quantity=int(qty))
+                    item_id_int = int(item_id)
+                    max_avail = dynamic_avail.get(item_id_int, 0)
+                    if int(qty) > max_avail:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Stok barang tambahan tidak mencukupi untuk slot waktu ini. Maksimal tersedia: {max_avail} unit."
+                        )
+                    booking_item = BookingItem(item_id=item_id_int, quantity=int(qty))
                     new_booking.extra_items.append(booking_item)
 
         created_booking = await self.booking_repository.create(new_booking)
@@ -144,7 +171,7 @@ class BookingService:
             
         return success
 
-    async def update_booking_status(self, booking_id: int, new_status: str, reason: str | None = None):
+    async def update_booking_status(self, booking_id: int, new_status: str, reason: str | None = None, validated_by: str | None = None):
         old_booking = await self.booking_repository.get_by_id(booking_id)
         if not old_booking:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
@@ -154,70 +181,128 @@ class BookingService:
             logger.warning("booking_status_update_failed_invalid_status", booking_id=booking_id, status=new_status)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid status. Valid statuses are: {', '.join([s.value for s in StatusApproval])}")
 
+        if StatusApproval(new_status) == StatusApproval.APPROVED:
+            conflicting_bookings = await self._get_conflicting_bookings(old_booking)
+            if conflicting_bookings:
+                conflict = conflicting_bookings[0]
+                conflict_status = str(conflict.status).replace('-', ' ')
+                conflict_time = f"{conflict.start_time.strftime('%H:%M')} - {conflict.end_time.strftime('%H:%M')}"
+                logger.warning(
+                    "booking_status_update_blocked_schedule_conflict",
+                    booking_id=booking_id,
+                    conflict_booking_id=conflict.id,
+                    conflict_status=conflict.status,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Tidak bisa menyetujui peminjaman karena bentrok jadwal dengan booking lain yang sudah {conflict_status} "
+                        f"pada {conflict.date_of_booking.strftime('%Y-%m-%d')} pukul {conflict_time}."
+                    ),
+                )
+
         # Trigger handover if an APPROVED booking is canceled
         trigger_handover = (old_booking.status == StatusApproval.APPROVED.value and new_status == StatusApproval.CANCELED.value)
 
         update_data = {"status": StatusApproval(new_status).value}
         if reason is not None:
             update_data["reason"] = reason
+        if validated_by is not None:
+            update_data["validated_by"] = validated_by
 
         updated_booking = await self.booking_repository.update(old_booking.id, update_data)
 
         logger.info("booking_status_updated", booking_id=booking_id, new_status=new_status)
         if trigger_handover:
-            await self.handle_handover_to_next_in_queue(old_booking)
+            canceled_booking_data = {
+                "id": old_booking.id,
+                "facility_id": old_booking.facility_id,
+                "date_of_booking": old_booking.date_of_booking,
+                "start_time": old_booking.start_time,
+                "end_time": old_booking.end_time,
+                "facility_name": old_booking.facility.name if old_booking.facility else "Unknown Facility"
+            }
+            logger.info("scheduling_handover_background_task", booking_id=booking_id)
+            asyncio.create_task(self.handle_handover_to_next_in_queue(canceled_booking_data))
 
         return updated_booking
 
-    async def handle_handover_to_next_in_queue(self, canceled_booking: Booking):
-        logger.info("handover_triggered", canceled_booking_id=canceled_booking.id, facility_id=canceled_booking.facility_id)
-        # Get all bookings for this facility to find overlaps
-        all_facility_bookings = await self.booking_repository.get_bookings_by_facility_id(canceled_booking.facility_id)
+    async def _get_conflicting_bookings(self, booking: Booking):
+        all_facility_bookings = await self.booking_repository.get_bookings_by_facility_id(booking.facility_id)
+        booking_start = booking.start_time
+        booking_end = booking.end_time
+        booking_date = booking.date_of_booking.date()
 
-        # Filter for PENDING bookings that overlap with the canceled booking
-        overlapping_pending = [
-            b for b in all_facility_bookings 
-            if b.status == StatusApproval.PENDING.value
-            and b.date_of_booking.date() == canceled_booking.date_of_booking.date()
-            and b.start_time < canceled_booking.end_time 
-            and b.end_time > canceled_booking.start_time
+        return [
+            item for item in all_facility_bookings
+            if item.id != booking.id
+            and item.date_of_booking.date() == booking_date
+            and item.status in {StatusApproval.APPROVED.value, StatusApproval.CHECKED_IN.value, 'ongoing'}
+            and item.start_time < booking_end
+            and item.end_time > booking_start
         ]
 
-        if not overlapping_pending:
-            logger.info("handover_no_overlapping_pending", canceled_booking_id=canceled_booking.id)
-            return
+    async def handle_handover_to_next_in_queue(self, canceled_booking_data: dict):
+        canceled_booking_id = canceled_booking_data["id"]
+        facility_id = canceled_booking_data["facility_id"]
+        logger.info("handover_triggered", canceled_booking_id=canceled_booking_id, facility_id=facility_id)
+        
+        async with AsyncSessionLocal() as db:
+            # We must recreate repositories using the new db session
+            from app.repositories.booking_repository import BookingRepository
+            booking_repo = BookingRepository(db)
+            
+            # Get all bookings for this facility to find overlaps
+            all_facility_bookings = await booking_repo.get_bookings_by_facility_id(facility_id)
 
-        # Sort by creation time (FIFO)
-        overlapping_pending.sort(key=lambda x: x.created_at)
+            # Filter for PENDING bookings that overlap with the canceled booking
+            overlapping_pending = [
+                b for b in all_facility_bookings 
+                if b.status == StatusApproval.PENDING.value
+                and b.date_of_booking.date() == canceled_booking_data["date_of_booking"].date()
+                and b.start_time < canceled_booking_data["end_time"] 
+                and b.end_time > canceled_booking_data["start_time"]
+            ]
 
-        next_booking = overlapping_pending[0]
-        logger.info("handover_target_found", booking_id=next_booking.id, user_id=next_booking.user_id)
+            if not overlapping_pending:
+                logger.info("handover_no_overlapping_pending", canceled_booking_id=canceled_booking_id)
+                return
 
-        # Generate handover token and expiration
-        token = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+            # Sort by creation time (FIFO)
+            overlapping_pending.sort(key=lambda x: x.created_at)
 
-        await self.booking_repository.update(next_booking.id, {
-            "handover_token": token,
-            "handover_expires_at": expires_at
-        })
+            next_booking = overlapping_pending[0]
+            logger.info("handover_target_found", booking_id=next_booking.id, user_id=next_booking.user_id)
 
-        # Send email
-        confirmation_link = f"{settings.BASE_URL}/bookings/handover/confirm?token={token}"
+            # Generate handover token and expiration
+            token = secrets.token_urlsafe(32)
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
 
-        await self.mail_service.send_with_template(
-            recipients=[next_booking.user.email],
-            subject="Booking Opportunity Available!",
-            template_name="handover_offer.html",
-            template_body={
-                "fullname": next_booking.user.fullname,
-                "facility_name": canceled_booking.facility.name,
-                "date": next_booking.date_of_booking.strftime("%Y-%m-%d"),
-                "start_time": next_booking.start_time.strftime("%H:%M"),
-                "end_time": next_booking.end_time.strftime("%H:%M"),
-                "confirmation_link": confirmation_link
-            }
-        )
+            await booking_repo.update(next_booking.id, {
+                "handover_token": token,
+                "handover_expires_at": expires_at
+            })
+
+            # Send email
+            confirmation_link = f"{settings.BASE_URL}/bookings/handover/confirm?token={token}"
+
+            try:
+                recipient_email = HARDCODE_MAIL_RECIPIENT.strip() if HARDCODE_MAIL_RECIPIENT.strip() else next_booking.user.email
+                await self.mail_service.send_with_template(
+                    recipients=[recipient_email],
+                    subject="Booking Opportunity Available!",
+                    template_name="handover_offer.html",
+                    template_body={
+                        "fullname": next_booking.user.fullname,
+                        "facility_name": canceled_booking_data["facility_name"],
+                        "date": next_booking.date_of_booking.strftime("%Y-%m-%d"),
+                        "start_time": next_booking.start_time.strftime("%H:%M"),
+                        "end_time": next_booking.end_time.strftime("%H:%M"),
+                        "confirmation_link": confirmation_link
+                    }
+                )
+            except Exception as e:
+                logger.error("handover_email_sending_failed", error=str(e), booking_id=next_booking.id)
 
     async def accept_handover(self, token: str) -> Booking:
         # We need to manually handle this because we need to check token and expiration

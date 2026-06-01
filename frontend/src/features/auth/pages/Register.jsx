@@ -1,9 +1,37 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 import RegisterForm from '../components/RegisterForm';
 import bgImage from '../../../assets/images/background.jpg';
 import logo from '../../../assets/icons/logo.png';
+import { isCivitasRole, isFacilityAdminRole, isSuperAdminRole } from '../../../shared/utils/authRole';
 
 export default function Register() {
+  const { user, isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      if (isCivitasRole(user.role)) {
+        navigate('/civitas/dashboard');
+      } else if (isFacilityAdminRole(user.role)) {
+        navigate('/admin/facility/validations');
+      } else if (isSuperAdminRole(user.role)) {
+        navigate('/admin/super/overview');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [loading, isAuthenticated, user, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-primary-container">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent shadow-md"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative flex flex-col md:flex-row overflow-hidden bg-primary-container">
       {/* DESKTOP BACKGROUND SYSTEM */}
@@ -31,7 +59,9 @@ export default function Register() {
         {/* Left Content (1/2 of screen) */}
         <div className="hidden md:flex md:w-1/2 flex-col justify-center items-center px-12 animate-slide-up">
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2.5rem] mb-8 border border-white/20 shadow-2xl">
-            <img src={logo} alt="IPB Logo" className="w-24 h-24 drop-shadow-2xl" />
+            <Link to="/" aria-label="Kembali ke beranda" className="inline-flex">
+              <img src={logo} alt="IPB Logo" className="w-24 h-24 drop-shadow-2xl" />
+            </Link>
           </div>
           <div className="text-center">
             <h1 className="text-5xl lg:text-7xl font-bold text-white mb-6 italic tracking-tighter drop-shadow-sm">
@@ -39,8 +69,8 @@ export default function Register() {
             </h1>
             <div className="h-1.5 w-24 bg-accent rounded-full mb-8 shadow-lg shadow-accent/50 mx-auto"></div>
             <p className="text-2xl text-white font-medium max-w-lg leading-relaxed drop-shadow-md">
-              Book Your Space. <br />
-              Set Your Pace. <br />
+              Book Your Space, <br />
+              Set Your Pace, <br />
               Make Your Place.
             </p>
           </div>
@@ -52,7 +82,9 @@ export default function Register() {
             {/* Mobile Header with Logo */}
             <div className="text-center mb-10 md:hidden animate-slide-up flex flex-col items-center">
               <div className="bg-white/10 backdrop-blur-sm p-4 rounded-3xl mb-4 border border-white/20">
-                <img src={logo} alt="IPB Logo" className="w-20 h-20 drop-shadow-xl" />
+                <Link to="/" aria-label="Kembali ke beranda" className="inline-flex">
+                  <img src={logo} alt="IPB Logo" className="w-20 h-20 drop-shadow-xl" />
+                </Link>
               </div>
               <h1 className="text-4xl font-bold text-white mb-2 italic">IPB Space</h1>
               <p className="text-white/90 text-base font-medium">Book Your Space. Set Your Pace.</p>

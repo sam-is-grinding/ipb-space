@@ -36,10 +36,13 @@ apiClient.interceptors.response.use(
 
   async (error) => {
     const originalRequest = error.config;
+    // CRITICAL FIX: Only treat 401 (Unauthorized) as a token/auth error.
+    // 403 (Forbidden) means the user IS authenticated but lacks ROLE permissions —
+    // this must NOT trigger a logout or token refresh cycle.
+    const isTokenExpired = error.response?.status === 401;
+    const isAuthRoute = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/register');
 
-    // Only handle 401 (Unauthorized — expired/invalid token).
-    // 403 = authenticated but not authorised → let callers handle it.
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (isTokenExpired && !isAuthRoute && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -68,9 +71,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);
