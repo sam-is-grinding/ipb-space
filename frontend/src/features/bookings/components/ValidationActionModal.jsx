@@ -3,14 +3,14 @@ import { X, CalendarBlank, Clock, Users, FilePdf, Eye, WarningCircle, FileDashed
 import { formatDate, formatTime } from '../../../shared/utils/format';
 import { bookingService } from '../services/bookingService';
 
-export default function ValidationActionModal({ 
-  isOpen, 
-  onClose, 
-  booking, 
-  onSubmit, 
+export default function ValidationActionModal({
+  isOpen,
+  onClose,
+  booking,
+  onSubmit,
   onViewPDF,    // kept for compat, but we now inline-load the doc
-  userMap = {}, 
-  facilityMap = {} 
+  userMap = {},
+  facilityMap = {}
 }) {
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -19,7 +19,7 @@ export default function ValidationActionModal({
   // Document viewer state
   const [docBlobUrl, setDocBlobUrl] = useState(null);
   const [isDocLoading, setIsDocLoading] = useState(false);
-  const [docError, setDocError] = useState(false);
+  const [docError, setDocError] = useState(null);
 
   // Reset every time a new booking is opened
   useEffect(() => {
@@ -60,16 +60,39 @@ export default function ValidationActionModal({
   const loadDocument = async (bookingId) => {
     try {
       setIsDocLoading(true);
-      setDocError(false);
+      setDocError(null);
+
       const blob = await bookingService.getBookingDocument(bookingId);
+
       if (blob instanceof Blob) {
         const url = URL.createObjectURL(blob);
         setDocBlobUrl(url);
       } else {
-        setDocError(true);
+        setDocError('Dokumen yang diterima tidak valid.');
       }
-    } catch {
-      setDocError(true);
+    } catch (err) {
+      let message = 'Gagal memuat dokumen';
+
+      try {
+        const text = await err.response.data.text();
+        const json = JSON.parse(text);
+
+        message =
+          json?.data?.error?.message ||
+          json?.detail ||
+          message;
+      } catch (e) {
+        console.error(e);
+      }
+
+      setDocError(message);
+
+
+      // setDocError(
+      //   err?.response?.data?.detail ||
+      //   err?.message ||
+      //   'Terjadi kesalahan saat memuat dokumen.'
+      // );
     } finally {
       setIsDocLoading(false);
     }
@@ -103,17 +126,17 @@ export default function ValidationActionModal({
     }
   };
 
-  const userName     = userMap[booking.user_id]     || `User ID: ${booking.user_id}`;
+  const userName = userMap[booking.user_id] || `User ID: ${booking.user_id}`;
   const facilityName = facilityMap[booking.facility_id] || `Fasilitas ID: ${booking.facility_id}`;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-      <div 
-        className="fixed inset-0 bg-[#02275D]/45 backdrop-blur-[5px] animate-fade-in cursor-default" 
+      <div
+        className="fixed inset-0 bg-[#02275D]/45 backdrop-blur-[5px] animate-fade-in cursor-default"
         onClick={onClose}
       />
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden animate-slide-up z-10 my-auto border border-slate-100">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
@@ -122,8 +145,8 @@ export default function ValidationActionModal({
             </div>
             <h2 className="text-xl font-black text-slate-800 tracking-tight">Tinjauan Peminjaman</h2>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             disabled={isSubmitting}
             className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors"
           >
@@ -134,10 +157,10 @@ export default function ValidationActionModal({
         {/* Body — Grid Layout */}
         <div className="p-6 lg:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Left Column: Info (1/3) */}
             <div className="space-y-6 lg:pr-6 lg:border-r border-slate-100">
-              
+
               {/* Peminjam */}
               <div>
                 <h3 className="text-xs font-bold text-slate-400 mb-3 tracking-wider uppercase">Informasi Peminjam</h3>
@@ -216,7 +239,7 @@ export default function ValidationActionModal({
                   </button>
                 )}
               </div>
-              
+
               <div className="flex-1 min-h-[340px] rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex flex-col items-center justify-center relative">
                 {/* Loading */}
                 {isDocLoading && (
@@ -243,8 +266,12 @@ export default function ValidationActionModal({
                         {docError ? (
                           <>
                             <FilePdf size={48} className="text-red-300 mb-4" weight="light" />
-                            <p className="text-slate-600 font-bold mb-1">Gagal memuat dokumen</p>
-                            <p className="text-sm text-slate-500 mb-4">File mungkin tidak dapat diakses saat ini.</p>
+                            <p className="text-slate-600 font-bold mb-1">
+                              Gagal memuat dokumen
+                            </p>
+                            <p className="text-sm text-slate-500 mb-4">
+                              {docError}
+                            </p>
                             <button
                               onClick={() => loadDocument(booking.id)}
                               className="px-4 py-2 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all"
@@ -295,19 +322,19 @@ export default function ValidationActionModal({
                   <WarningCircle size={24} className="text-danger" weight="fill" />
                   Tolak Permohonan?
                 </h3>
-                <button 
-                  onClick={() => setShowRejectPrompt(false)} 
+                <button
+                  onClick={() => setShowRejectPrompt(false)}
                   disabled={isSubmitting}
                   className="text-slate-400 hover:text-slate-600 bg-slate-50 p-1.5 rounded-full"
                 >
                   <X size={18} weight="bold" />
                 </button>
               </div>
-              
+
               <p className="text-sm text-slate-600 mb-4 leading-relaxed">
                 Anda akan menolak permohonan peminjaman ini secara permanen. Mohon berikan <strong>alasan penolakan</strong> untuk dikirimkan kepada peminjam.
               </p>
-              
+
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
@@ -315,7 +342,7 @@ export default function ValidationActionModal({
                 placeholder="Tuliskan alasan penolakan secara spesifik..."
                 required
               />
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowRejectPrompt(false)}

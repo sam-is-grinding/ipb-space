@@ -10,8 +10,9 @@ from app.schemas.user import UserCreate
 FAILED_LOGIN_THRESHOLD: int = 5
 LOCK_DURATION_MINUTES: int = 15
 
-from app.models.user import User, FacilityAdmin
+from app.models.user import User
 from app.schemas.user import UserCreate, ManagerCreate
+from app.enums.user_enums import UserRoles
 
 class UserRepository:
     def __init__(self, db: AsyncSession):
@@ -104,40 +105,62 @@ class UserRepository:
             user.locked_until = until
             await self.db.commit()
 
-    async def list_managers(self, skip: int = 0, limit: int = 100) -> list[FacilityAdmin]:
+    async def list_managers(self, skip: int = 0, limit: int = 100) -> list[User]:
         """
         Retrieve all facility managers.
         """
-        stmt = select(FacilityAdmin).offset(skip).limit(limit)
+        stmt = (
+            select(User)
+            .where(
+                User.role == UserRoles.FACILITY_MANAGER,
+                User.deleted_at.is_(None)
+            )
+            .offset(skip)
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_manager_by_id(self, manager_id: int) -> Optional[FacilityAdmin]:
+    async def get_manager_by_id(self, manager_id: int) -> Optional[User]:
         """
         Retrieve a facility manager by ID.
         """
-        stmt = select(FacilityAdmin).where(FacilityAdmin.id == manager_id)
+        stmt = (
+            select(User)
+            .where(
+                User.id == manager_id,
+                User.role == UserRoles.FACILITY_MANAGER,
+                User.deleted_at.is_(None)
+            )
+        )
         result = await self.db.execute(stmt)
         return result.scalars().first()
 
-    async def get_manager_by_email(self, email: str) -> Optional[FacilityAdmin]:
+    async def get_manager_by_email(self, email: str) -> Optional[User]:
         """
         Retrieve a facility manager by email.
         """
-        stmt = select(FacilityAdmin).where(FacilityAdmin.email == email)
+        stmt = (
+            select(User)
+            .where(
+                User.email == email,
+                User.role == UserRoles.FACILITY_MANAGER,
+                User.deleted_at.is_(None)
+            )
+        )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def create_manager(self, manager_create: ManagerCreate, hashed_password: str) -> FacilityAdmin:
+    async def create_manager(self, manager_create: ManagerCreate, hashed_password: str) -> User:
         """
         Create a new facility manager in the database.
         """
-        new_manager = FacilityAdmin(
+        new_manager = User(
             email=manager_create.email,
             fullname=manager_create.fullname,
             idnum=manager_create.idnum,
             hashed_password=hashed_password,
-            role=manager_create.role.value if manager_create.role else "facility_manager",
+            role=UserRoles.FACILITY_MANAGER,
             work_unit=manager_create.work_unit,
             is_active=manager_create.is_active,
             created_at=datetime.datetime.now()
@@ -147,7 +170,7 @@ class UserRepository:
         await self.db.refresh(new_manager)
         return new_manager
 
-    async def update_manager(self, manager_id: int, **kwargs: Any) -> Optional[FacilityAdmin]:
+    async def update_manager(self, manager_id: int, **kwargs: Any) -> Optional[User]:
         """
         Update a facility manager's fields.
         """
