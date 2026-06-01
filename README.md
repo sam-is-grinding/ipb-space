@@ -4,7 +4,7 @@ Repository ini adalah fork dari project [IPB Space](https://github.com/HusniAbdi
 Bedanya di sini ada tambahan protokol keamanan(?) atau apapun namanya, untuk tugas pada mata kuliah KOM1315
 ---
  
-# copy_source.py
+# copy_stuff.py
  
 Script ini dipakai untuk menyalin file-file _source code_ yang (mungkin) relevan dari folder backend ke struktur folder target (misal `03_Source_Code`).
  
@@ -13,7 +13,7 @@ Script ini dipakai untuk menyalin file-file _source code_ yang (mungkin) relevan
 Jalankan scriptnya:
  
 ```bash
-python copy_source.py
+python copy_stuff.py
 ```
  
 Nanti akan minta dua input path:
