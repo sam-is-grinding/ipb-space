@@ -5,3 +5,4 @@ node_modules/
 dist/ 
 .DS_Store
 copy_stuff_with_path.py
+./backend/app_logs.txt
