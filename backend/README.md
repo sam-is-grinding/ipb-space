@@ -27,28 +27,14 @@ backend/
 ```
 
 ## Konfigurasi Lingkungan (.env)
-Buat file `.env` di dalam folder `backend/` dengan konfigurasi berikut:
-
-```ini
-DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:PORT/NAMA_DB
-SECRET_KEY=string_rahasia_untuk_jwt
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Document Store Configuration
-BOOKING_DOCUMENT_VENDOR=
-
-# Appwrite Configuration
-APPWRITE_ENDPOINT=
-APPWRITE_PROJECT_ID=
-APPWRITE_API_KEY=
-APPWRITE_BUCKET_ID=
-
-# Mailer Configuration
-RESEND_API_KEY=
-MAIL_FROM=
-MAIL_FROM_NAME=
+Copy file `.env.example` di `backend/`, rename jadi `.env`
+jalankan 
+```bash
+cd backend
+python scripts/generate_keys.py
 ```
+Copy hasil `DOCUMENT_SIGNING_PRIVATE_KEY` dan `DOCUMENT_ENCRYPTION_KEY` ke `.env` tadi.
+
 ## Menjalankan dengan Docker Compose (Recommended)
 1. **Pastikan Docker sudah ter-install di mesin anda**
 ```bash
